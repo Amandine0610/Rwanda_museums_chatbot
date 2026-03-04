@@ -16,23 +16,31 @@ app.use(express.json());
 
 // Proxy route to ML Service
 app.post('/api/chat', async (req, res) => {
+    const targetUrl = `${ML_SERVICE_URL}/query`;
+    console.log(`Forwarding query to: ${targetUrl}`);
+
     try {
-        const response = await axios.post(`${ML_SERVICE_URL}/query`, req.body, {
-            timeout: 60000 // Increase timeout to 60 seconds for slow cold starts
+        const response = await axios.post(targetUrl, req.body, {
+            timeout: 60000
         });
         res.json(response.data);
     } catch (error) {
-        // Pass through the ML Service's response if it actually responded (e.g., 503 Service Unavailable)
+        console.error(`ERROR calling ML Service at ${targetUrl}:`, error.message);
+
         if (error.response) {
-            console.error('ML Service Responded with Error:', error.response.status, error.response.data);
+            console.error('ML Service Status:', error.response.status);
+            console.error('ML Service Data:', error.response.data);
             return res.status(error.response.status).json(error.response.data);
         }
 
-        // Generic fallback for actual connection failures (timeout, DNS, service down)
+        // Generic fallback with diagnostic info
         res.json({
-            response: "Connection Error: Could not reach the AI service. Please ensure the Python server is running in the Render dashboard.",
-            source: "backend-fallback",
-            error: error.message
+            response: `Connection Error: Backend could not reach AI service at ${ML_SERVICE_URL}.`,
+            diagnostics: {
+                target: targetUrl,
+                error: error.message,
+                hint: "Check if ML_SERVICE_URL in Render matches your ML service's public URL and remove any ':5050' if present."
+            }
         });
     }
 });
