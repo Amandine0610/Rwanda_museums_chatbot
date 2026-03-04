@@ -1,6 +1,6 @@
 # 🚀 Deployment & Installation Guide
 
-Follow these steps to deploy and run the **Universal Museum Guide** in any environment.
+To deploy and run the **Universal Museum Guide** in any environment.
 
 ## 1. Prerequisites
 - **Node.js**: v18 or higher (Frontend/Backend)
@@ -8,30 +8,30 @@ Follow these steps to deploy and run the **Universal Museum Guide** in any envir
 - **Git**: For repository cloning
 
 ## 2. Environment Setup
-Create a `.env` file in the `ml-service` folder:
+Creating an `.env` file in the `ml-service` folder:
 ```env
-OPENAI_API_KEY=your_key_here  # Optional: Fallback to local model if blank
+OPENAI_API_KEY=your_key_here  
 ```
 
 ## 3. Step-by-Step Installation
 
-### A. ML Service (The Brain)
+### A. ML Service 
 ```bash
 cd ml-service
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate  
 pip install -r requirements.txt
-python app.py  # Runs on port 5005
+python app.py  # Runs on port 5050
 ```
 
-### B. Backend (The Bridge)
+### B. Backend 
 ```bash
 cd backend
 npm install
 node server.js  # Runs on port 5000
 ```
 
-### C. Frontend (The Interface)
+### C. Frontend 
 ```bash
 cd frontend
 npm install
@@ -48,8 +48,8 @@ Open your browser to:
 To make the app accessible globally, follow these professional deployment steps:
 
 ### A. Frontend (Vercel - Recommended)
-1. Push your code to GitHub.
-2. Connect your repo to [Vercel](https://vercel.com).
+1. Push the code to GitHub.
+2. Connect the repo to [Vercel](https://vercel.com).
 3. **Build Settings**:
    - Build Command: `npm run build`
    - Output Directory: `dist`
