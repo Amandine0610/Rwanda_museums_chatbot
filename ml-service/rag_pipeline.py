@@ -14,7 +14,14 @@ def initialize_rag():
     global vector_store, qa_chain, retriever, qa_extractor, use_openai_mode
 
     try:
-        print("Initializing RAG Pipeline...")
+        print("--- RAG INITIALIZATION START ---")
+        
+        # Check for OpenAI Key immediately
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            print("WARNING: OPENAI_API_KEY not found in environment variables.")
+        else:
+            print(f"DEBUG: OpenAI Key found (starts with: {api_key[:8]}...)")
 
         from langchain_community.document_loaders import TextLoader
         from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -24,109 +31,85 @@ def initialize_rag():
 
         # 1. Load museum data
         data_path = os.path.join(os.path.dirname(__file__), "museum_data.txt")
+        if not os.path.exists(data_path):
+            print(f"ERROR: museum_data.txt NOT FOUND at {data_path}")
+            return
+            
         loader = TextLoader(data_path, encoding="utf-8")
         documents = loader.load()
 
-        # 2. Split into chunks — smaller chunks = more precise retrieval
+        # 2. Split into chunks
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=600,
-            chunk_overlap=100,
+            chunk_overlap=50,
             separators=["\n\n", "\n", ". ", " "]
         )
         chunks = splitter.split_documents(documents)
-        print(f"Split into {len(chunks)} chunks.")
+        print(f"Documents parsed into {len(chunks)} chunks.")
 
-        # 3. Try OpenAI, fall back to local
-        api_key = os.getenv("OPENAI_API_KEY")
+        # 3. Try OpenAI
         use_openai_mode = False
-
         if api_key and api_key.strip():
             try:
-                print("Attempting OpenAI mode...")
                 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+                print("Initializing OpenAI Models...")
                 embeddings = OpenAIEmbeddings(openai_api_key=api_key)
                 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3, openai_api_key=api_key)
-                embeddings.embed_query("test")
+                # Quick test
+                embeddings.embed_query("ping")
                 use_openai_mode = True
-                print("OpenAI initialized successfully.")
+                print("SUCCESS: OpenAI (gpt-4o-mini) initialized.")
             except Exception as e_openai:
-                print(f"OpenAI failed ({e_openai}). Falling back to local...")
-                use_openai_mode = False
+                print(f"ERROR: OpenAI initialization failed: {e_openai}")
 
+        # 4. Fallback Handling
         if not use_openai_mode:
-            print("Using local Extractive QA...")
-            try:
-                from langchain_community.embeddings import HuggingFaceEmbeddings
-                from transformers import pipeline as hf_pipeline
+            print("FALLBACK: OpenAI unavailable. Skipping local models to prevent OOM crash on Render.")
+            print("Please ensure OPENAI_API_KEY is set in the Render Dashboard Environment Variables for the ML Service.")
+            qa_chain = None
+            return
 
-                embeddings = HuggingFaceEmbeddings(
-                    model_name="sentence-transformers/all-MiniLM-L6-v2"
-                )
-                qa_extractor = hf_pipeline(
-                    "question-answering",
-                    model="deepset/roberta-base-squad2"
-                )
-                print("Local QA model (roberta-base-squad2) loaded.")
-            except Exception as e_local:
-                print(f"FAILED to load local QA model: {e_local}")
-                qa_chain = None
-                return
-
-        # 4. Initialize Vector Store with unique collection name and local persistence
-        import time
-        unique_col = f"museum_{int(time.time())}"
+        # 5. Initialize Vector Store
+        # Use a fixed persist_directory to avoid RAM-based ephemeral stores
         persist_dir = os.path.join(os.path.dirname(__file__), "chroma_db")
         vector_store = Chroma.from_documents(
             chunks,
             embeddings,
-            collection_name=unique_col,
+            collection_name="museum_collection",
             persist_directory=persist_dir
         )
-        print(f"Vector Store ready: collection '{unique_col}' at {persist_dir}")
+        print(f"Vector Store ready at {persist_dir}")
 
-        retriever = vector_store.as_retriever(search_kwargs={"k": 8})
+        retriever = vector_store.as_retriever(search_kwargs={"k": 5})
 
-        if use_openai_mode:
-            prompt = ChatPromptTemplate.from_template(
-                """You are a professional and friendly Rwanda Museum Guide.
-Your goal is to provide insightful and culturally rich stories about Rwandan heritage.
+        prompt = ChatPromptTemplate.from_template(
+            """You are a Rwanda Museum Guide. Answer ONLY using the context:
+            
+            Context: {context}
+            Language: {language}
+            Question: {query}
+            
+            Answer:"""
+        )
 
-DIRECTIONS:
-1. Respond in the language: {language}.
-2. Answer ONLY using the information in the Context provided.
-3. If the context doesn't contain the answer, say you don't have that detail.
-4. Be descriptive, respectful, and engaging.
-5. Mention the specific museum or artifact when possible.
+        def format_docs(docs):
+            return "\n\n".join(doc.page_content for doc in docs)
 
-Context:
-{context}
+        qa_chain = (
+            {
+                "context": (lambda x: x["query"]) | retriever | format_docs,
+                "query": lambda x: x["query"],
+                "language": lambda x: x["language"]
+            }
+            | prompt
+            | llm
+            | StrOutputParser()
+        )
 
-Visitor Question:
-{query}
-
-Your Answer:"""
-            )
-
-            def format_docs(docs):
-                return "\n\n".join(doc.page_content for doc in docs)
-
-            qa_chain = (
-                {
-                    "context": (lambda x: x["query"]) | retriever | format_docs,
-                    "query": lambda x: x["query"],
-                    "language": lambda x: x["language"]
-                }
-                | prompt
-                | llm
-                | StrOutputParser()
-            )
-        else:
-            qa_chain = "local_extractive"
-
-        print(f"RAG initialized. Mode: {'OpenAI' if use_openai_mode else 'Local Extractive QA'}")
+        print("--- RAG INITIALIZATION COMPLETE ---")
 
     except Exception as e:
-        print(f"ERROR during RAG initialization: {e}")
+        print(f"CRITICAL ERROR during RAG init: {e}")
         qa_chain = None
 
 
