@@ -64,13 +64,20 @@ def initialize_rag():
 
         # 4. Fallback Handling
         if not use_openai_mode:
-            print("FALLBACK: OpenAI unavailable. Skipping local models to prevent OOM crash on Render.")
-            print("Please ensure OPENAI_API_KEY is set in the Render Dashboard Environment Variables for the ML Service.")
-            qa_chain = None
-            return
+            print("FALLBACK: OpenAI unavailable (Quota or Key issue).")
+            try:
+                from langchain_community.embeddings import HuggingFaceEmbeddings
+                print("Loading Lightweight Embeddings (MiniLM)...")
+                embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+                print("MiniLM Embeddings loaded successfully.")
+                use_openai_mode = False
+                qa_chain = "lightweight_mode" # Flag for direct chunk return
+            except Exception as e_light:
+                print(f"FAILED to load light embeddings: {e_light}")
+                qa_chain = None
+                return
 
         # 5. Initialize Vector Store
-        # Use a fixed persist_directory to avoid RAM-based ephemeral stores
         persist_dir = os.path.join(os.path.dirname(__file__), "chroma_db")
         vector_store = Chroma.from_documents(
             chunks,
@@ -80,31 +87,32 @@ def initialize_rag():
         )
         print(f"Vector Store ready at {persist_dir}")
 
-        retriever = vector_store.as_retriever(search_kwargs={"k": 5})
+        retriever = vector_store.as_retriever(search_kwargs={"k": 3})
 
-        prompt = ChatPromptTemplate.from_template(
-            """You are a Rwanda Museum Guide. Answer ONLY using the context:
-            
-            Context: {context}
-            Language: {language}
-            Question: {query}
-            
-            Answer:"""
-        )
+        if use_openai_mode:
+            prompt = ChatPromptTemplate.from_template(
+                """You are a Rwanda Museum Guide. Answer ONLY using the context:
+                
+                Context: {context}
+                Language: {language}
+                Question: {query}
+                
+                Answer:"""
+            )
 
-        def format_docs(docs):
-            return "\n\n".join(doc.page_content for doc in docs)
+            def format_docs(docs):
+                return "\n\n".join(doc.page_content for doc in docs)
 
-        qa_chain = (
-            {
-                "context": (lambda x: x["query"]) | retriever | format_docs,
-                "query": lambda x: x["query"],
-                "language": lambda x: x["language"]
-            }
-            | prompt
-            | llm
-            | StrOutputParser()
-        )
+            qa_chain = (
+                {
+                    "context": (lambda x: x["query"]) | retriever | format_docs,
+                    "query": lambda x: x["query"],
+                    "language": lambda x: x["language"]
+                }
+                | prompt
+                | llm
+                | StrOutputParser()
+            )
 
         print("--- RAG INITIALIZATION COMPLETE ---")
 
@@ -114,22 +122,33 @@ def initialize_rag():
 
 
 def get_answer(query: str, language: str = "en") -> str:
-    global retriever, qa_chain, vector_store, qa_extractor, use_openai_mode
+    global retriever, qa_chain, vector_store, use_openai_mode
 
     if qa_chain is None or retriever is None:
-        return "The museum guide system is currently initializing. Please try again in a moment."
+        return "The museum guide system is currently initializing or encountered a configuration error. Please check your API key."
 
     try:
-        # Retrieve top 6 closest chunks by semantic similarity
-        docs_and_scores = vector_store.similarity_search_with_score(query, k=6)
-
-        if not docs_and_scores:
-            return "I'm sorry, I couldn't find any information about that in the museum archives."
-
-        # OpenAI mode: use the full generative chain
+        # 1. OpenAI Generative Mode
         if use_openai_mode:
             response = qa_chain.invoke({"query": query, "language": language})
             return response.strip()
+
+        # 2. Lightweight Fallback Mode (Returns direct archive match)
+        # This is used when OpenAI fails to prevent memory crashes on Render.
+        docs_and_scores = vector_store.similarity_search_with_score(query, k=1)
+        if not docs_and_scores:
+            return "I'm sorry, I couldn't find any information about that in the museum archives."
+
+        best_chunk = docs_and_scores[0][0].page_content.strip()
+        
+        # Multilingual prefix based on language
+        intro = {
+            "en": "I found this in the museum archives: ",
+            "fr": "J'ai trouvé ceci dans les archives du musée: ",
+            "rw": "Ibi niko bimeze mu nyandiko z'intebe y'ubumenyi: ",
+        }.get(language, "I found this: ")
+
+        return f"{intro}\n\n{best_chunk}"
 
         # ── LOCAL PRECISION MODE ──────────────────────────────────────────────
         # KEY INSIGHT: Sort by distance score (lower = better in Chroma L2 space).

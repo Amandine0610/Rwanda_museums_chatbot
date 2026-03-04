@@ -1,8 +1,7 @@
 # 🏛️ Rwanda Museum Interactive Guide — Multilingual AI Chatbot
-
  **Capstone Project** | BSc. Software Engineering | Amandine Irakoze | Supervisor: Thadee Gatera
 
-A culturally contextualised, machine-learning–driven chatbot utilising **Retrieval-Augmented Generation (RAG)** to provide interactive, multilingual cultural storytelling in **Kinyarwanda, English, and French** for Rwandan museums.
+In this project, I developed a culturally contextualised, machine-learning–driven chatbot utilising **Retrieval-Augmented Generation (RAG)**. My system provides interactive, multilingual cultural storytelling in **Kinyarwanda, English, and French** for various Rwandan museums.
 
 ---
 
@@ -21,38 +20,41 @@ A culturally contextualised, machine-learning–driven chatbot utilising **Retri
 
 ---
 
-## 🚀 Installation & Setup (Step-by-Step)
+## 🚀 Development Setup
+To run this project locally, I follow these steps:
 
-### 1. Clone & Prereqs
+### 1. Repository Setup
 ```bash
 git clone https://github.com/Amandine0610/museum_chatbot_prototype.git
 cd museum_chatbot_prototype
 ```
-- **Requirements**: Node.js (v18+), Python (v3.9+)
 
-### 2. ML Service 
+### 2. ML Engine (Python)
+I use a Python virtual environment to manage dependencies for the RAG pipeline.
 ```bash
 cd ml-service
 python -m venv venv
-# Windows: venv\Scripts\activate | Mac/Linux: source venv/bin/activate
+# Windows: venv\Scripts\activate
 pip install -r requirements.txt
-python app.py  # Runs on port 5050
+python app.py
 ```
 
-### 3. Backend 
+### 3. API Gateway (Node.js)
+The backend manages the bridge between the frontend and the AI service.
 ```bash
 cd backend
 npm install
-node server.js  # Runs on port 3000
+node server.js
 ```
 
-### 4. Frontend 
+### 4. Interactive Frontend (React)
+The mobile-first UI is built with React and Vite.
 ```bash
 cd frontend
 npm install
-npm run dev     # Runs on port 5173
+npm run dev
 ```
-Visit: **http://localhost:5173**
+Open: **http://localhost:5173**
 
 ---
 
