@@ -90,20 +90,25 @@ def initialize_rag():
         retriever = vector_store.as_retriever(search_kwargs={"k": 3})
 
         if use_openai_mode:
-            prompt = ChatPromptTemplate.from_template(
-                """You are a professional Rwanda Museum Tour Guide.
-                
-                STRICT RULE: You MUST answer the question in {language}.
-                If the question is in French, answer in French.
-                If the question is in Kinyarwanda, answer in Kinyarwanda.
-                
-                Context about the museum:
-                {context}
-                
-                Visitor Question: {query}
-                
-                Answer in {language}:"""
-            )
+            from langchain_core.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate
+            
+            system_template = """You are a professional Rwanda Museum Tour Guide.
+            
+            CRITICAL RULES:
+            1. You MUST answer specifically in {language}.
+            2. If the user asks in French, answer in French.
+            3. If the user asks in Kinyarwanda, answer in Kinyarwanda.
+            4. Do NOT use English if the requested language is {language}.
+            
+            Museum Knowledge:
+            {context}"""
+            
+            human_template = "Visitor Question: {query}"
+            
+            prompt = ChatPromptTemplate.from_messages([
+                SystemMessagePromptTemplate.from_template(system_template),
+                HumanMessagePromptTemplate.from_template(human_template)
+            ])
 
             def format_docs(docs):
                 return "\n\n".join(doc.page_content for doc in docs)
@@ -126,26 +131,64 @@ def initialize_rag():
         qa_chain = None
 
 
+# PRE-TRANSLATED CONTENT FOR SMART FALLBACK (OpenAI Quota Exhausted)
+PRE_TRANSLATED = {
+    "karinga": {
+        "en": "The Karinga is the supreme sacred royal drum of Rwanda, symbol of the heart of the nation.",
+        "fr": "Le Karinga est le tambour royal sacré suprême du Rwanda, symbolisant le cœur de la nation.",
+        "rw": "Karinga ni ingoma ntagatifu y'icyubahiro mu Rwanda, ihagarariye umutima w'igihugu."
+    },
+    "intebe": {
+        "en": "The Intebe y'Umwami is the hand-carved wooden throne representing royal judicial authority.",
+        "fr": "L'Intebe y'Umwami est le trône en bois sculpté représentant l'autorité royale.",
+        "rw": "Intebe y'Umwami ni intebe yakozwe mu giti n'intoke, ihagarariye ububasha bw'Umwami."
+    },
+    "inzitane": {
+        "en": "The Inzira y'Inzitane is an art exhibition showing Rwanda's journey from tragedy to renaissance.",
+        "fr": "L'exposition Inzira y'Inzitane raconte l'histoire du Rwanda à travers des sculptures métalliques.",
+        "rw": "Imurikagurisha rya Inzira y'Inzitane rivuga urugendo rw'u Rwanda rwo kuva mu mwijima rwerekeza mu mucyo."
+    },
+    "inyambo": {
+        "en": "Inyambo are sacred royal cattle with long lyre-shaped horns, trained to parade and dance.",
+        "fr": "Les Inyambo sont des bovins royaux aux longues cornes, dressés pour parader.",
+        "rw": "Inyambo ni inka z'amateka n'icyubahiro zizwiho amahembe maremare n'uburyo zegera."
+    },
+    "12.7": {
+        "en": "The 12.7mm machine gun on the CND building was used to protect civilians during the 1994 genocide.",
+        "fr": "La mitrailleuse de 12,7 mm sur le bâtiment du CND a servi à protéger les civils en 1994.",
+        "rw": "Imashini ya 12.7mm yakoreshejwe ku nyubako y'inteko mu kurinda abaturage muri Jenoside."
+    },
+    "imigongo": {
+        "en": "Imigongo is a traditional art form made from cow dung and natural pigments.",
+        "fr": "L'Imigongo est un art traditionnel fait de bouse de vache et de pigments naturels.",
+        "rw": "Imigongo ni uburyo bw'ubuhanzi bw'umwimerere bukoresha amase n'ibishushanyo mbonera."
+    }
+}
+
+
 def get_answer(query: str, language: str = "en") -> str:
     global retriever, qa_chain, vector_store, use_openai_mode
 
     if qa_chain is None or retriever is None:
         return "System initializing... Please wait."
 
-    # Map codes to full names for better AI understanding
+    # Map codes to full names
     lang_names = {"en": "English", "fr": "French", "rw": "Kinyarwanda"}
     full_lang = lang_names.get(language, "English")
 
     try:
         # 1. OpenAI Generative Mode
         if use_openai_mode:
-            # Pass the full language name to the chain
             response = qa_chain.invoke({"query": query, "language": full_lang})
             return response.strip()
 
-        # 2. Lightweight Fallback Mode (Direct match)
-        # NOTE: This mode uses the English knowledge base directly because 
-        # local translation is too heavy for the 512MB RAM limit on Render's free tier.
+        # 2. Smart Fallback Mode (Keyword based translation)
+        lower_query = query.lower()
+        for key, translations in PRE_TRANSLATED.items():
+            if key in lower_query:
+                return translations.get(language, translations["en"])
+
+        # 3. Last Resort Fallback (English record with translated header)
         docs_and_scores = vector_store.similarity_search_with_score(query, k=1)
         if not docs_and_scores:
             return "No matching records found."
