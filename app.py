@@ -1,6 +1,6 @@
 """
 Rwanda Museum Chatbot - RAG-based chatbot using Chroma DB + Gemini LLM
-Version: 3.4 (Ghost Purification - Absolute French Parity)
+Version: 3.5 (Production Ready - Render Optimized)
 Supports: English, French, Kinyarwanda for ALL Museums
 """
 
@@ -143,7 +143,7 @@ PERSONA_WRAPPERS = {
 # Vector DB Setup
 embedding_model = SentenceTransformer(MODEL_NAME)
 chroma_client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
-collection = chroma_client.get_or_create_collection(name="rwanda_museums_v3_4")
+collection = chroma_client.get_or_create_collection(name="rwanda_museums_v3_5")
 
 def clean_text(text):
     if not text: return ""
@@ -262,16 +262,17 @@ def chat():
     context = results['documents'][0] if results['documents'] else []
     
     response = generate_response(msg, context, lang, mid, m_name)
-    return jsonify({'response': response, 'instance': INSTANCE_ID, 'version': '3.4'})
+    return jsonify({'response': response, 'instance': INSTANCE_ID, 'version': '3.5'})
 
 @app.route('/api/status', methods=['GET'])
-def status(): return jsonify({'status': 'online', 'version': '3.4', 'instance': INSTANCE_ID, 'indexed': collection.count()})
+def status(): return jsonify({'status': 'online', 'version': '3.5', 'instance': INSTANCE_ID, 'indexed': collection.count()})
 
 if __name__ == '__main__':
     initialize_vector_store()
+    port = int(os.environ.get('PORT', 5000))
     print("\n" + "*"*60)
-    print(f"  !!! GHOST PURIFICATION: MUSEUM SERVER v3.4 !!!")
-    print(f"  STATUS: CRITICAL FRENCH PARITY ACTIVE")
-    print(f"  INSTANCE ID: {INSTANCE_ID}")
+    print(f"  !!! PRODUCTION READY: MUSEUM SERVER v3.5 !!!")
+    print(f"  STATUS: RENDER OPTIMIZED & FRENCH PARITY")
+    print(f"  PORT: {port} | INSTANCE ID: {INSTANCE_ID}")
     print("*"*60 + "\n")
-    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
