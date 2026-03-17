@@ -1,6 +1,6 @@
 """
 Rwanda Museum Chatbot - RAG-based chatbot using Chroma DB + Gemini LLM
-Version: 3.5 (Production Ready - Render Optimized)
+Version: 3.6 (Cloud Native - Fast Boot)
 Supports: English, French, Kinyarwanda for ALL Museums
 """
 
@@ -140,10 +140,21 @@ PERSONA_WRAPPERS = {
     ]
 }
 
-# Vector DB Setup
-embedding_model = SentenceTransformer(MODEL_NAME)
-chroma_client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
-collection = chroma_client.get_or_create_collection(name="rwanda_museums_v3_5")
+# Lazy-loaded globals
+embedding_model = None
+chroma_client = None
+collection = None
+
+def get_db():
+    global embedding_model, chroma_client, collection
+    if embedding_model is None:
+        print(f"[{INSTANCE_ID}] Lazy-loading ML Engine & ChromaDB...")
+        embedding_model = SentenceTransformer(MODEL_NAME)
+        chroma_client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
+        collection = chroma_client.get_or_create_collection(name="rwanda_museums_v3_6")
+        if collection.count() == 0:
+            initialize_vector_store()
+    return embedding_model, collection
 
 def clean_text(text):
     if not text: return ""
@@ -169,11 +180,12 @@ def load_knowledge_base():
     return documents, metadata, ids
 
 def initialize_vector_store():
-    if collection.count() == 0:
-        docs, metas, ids = load_knowledge_base()
-        if docs:
-            embeddings = embedding_model.encode(docs)
-            collection.add(documents=docs, embeddings=embeddings.tolist(), metadatas=metas, ids=ids)
+    # This now assumes get_db has been called or uses current globals
+    docs, metas, ids = load_knowledge_base()
+    if docs:
+        embeddings = embedding_model.encode(docs)
+        collection.add(documents=docs, embeddings=embeddings.tolist(), metadatas=metas, ids=ids)
+    print(f"[{INSTANCE_ID}] Database re-indexed: {collection.count()} items.")
 
 def apply_persona(text, lang):
     wrappers = PERSONA_WRAPPERS.get(lang, PERSONA_WRAPPERS['en'])
@@ -257,22 +269,26 @@ def chat():
         return jsonify({'response': res.get(lang, res['en'])})
 
     # Retrieval
-    query_embedding = embedding_model.encode([msg]).tolist()
-    results = collection.query(query_embeddings=query_embedding, n_results=3, where={"museum_id": mid})
+    model, coll = get_db()
+    query_embedding = model.encode([msg]).tolist()
+    results = coll.query(query_embeddings=query_embedding, n_results=3, where={"museum_id": mid})
     context = results['documents'][0] if results['documents'] else []
     
     response = generate_response(msg, context, lang, mid, m_name)
-    return jsonify({'response': response, 'instance': INSTANCE_ID, 'version': '3.5'})
+    return jsonify({'response': response, 'instance': INSTANCE_ID, 'version': '3.6'})
 
 @app.route('/api/status', methods=['GET'])
-def status(): return jsonify({'status': 'online', 'version': '3.5', 'instance': INSTANCE_ID, 'indexed': collection.count()})
+def status(): 
+    count = collection.count() if collection else 0
+    return jsonify({'status': 'online', 'version': '3.6', 'instance': INSTANCE_ID, 'indexed': count})
 
 if __name__ == '__main__':
-    initialize_vector_store()
+    # Local runs still pre-load for comfort
+    get_db()
     port = int(os.environ.get('PORT', 5000))
     print("\n" + "*"*60)
-    print(f"  !!! PRODUCTION READY: MUSEUM SERVER v3.5 !!!")
-    print(f"  STATUS: RENDER OPTIMIZED & FRENCH PARITY")
+    print(f"  !!! CLOUD NATIVE: MUSEUM SERVER v3.6 !!!")
+    print(f"  STATUS: FAST BOOT ACTIVE")
     print(f"  PORT: {port} | INSTANCE ID: {INSTANCE_ID}")
     print("*"*60 + "\n")
     app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
