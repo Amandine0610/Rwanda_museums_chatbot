@@ -659,17 +659,6 @@ def status():
     count = collection.count() if collection else 0
     return jsonify({'status': 'online', 'version': '4.2', 'instance': INSTANCE_ID, 'indexed': count, 'museums': len(MUSEUM_NAMES)})
 
-# ── Serve React frontend (production build) ──────────────────────────────────
-_FRONTEND_BUILD = os.path.join(os.path.dirname(__file__), 'frontend', 'dist')
-
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_frontend(path):
-    from flask import send_from_directory
-    if path and os.path.exists(os.path.join(_FRONTEND_BUILD, path)):
-        return send_from_directory(_FRONTEND_BUILD, path)
-    return send_from_directory(_FRONTEND_BUILD, 'index.html')
-
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
     print("\n" + "*"*60)
