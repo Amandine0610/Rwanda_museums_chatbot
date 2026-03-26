@@ -130,7 +130,7 @@ CORE_FACTS = {
             "exhibits":   "Ibikomeye mu ngoro ni ingoro y'ibyatsi y'imigani (ingoro ya mbere y'umwami), ingoro ya Art Deco yubatse mu 1931, inka z'umwami (Inyambo) zirangwa n'amahembe maremare, n'ibikoresho by'ubwami nk'ingoma, inzige n'ibindi.",
             "transport":  "Ingoro iherereye mu Nyanza. Ushobora kuza n'imodoka ya gutumbagiza (moto) cyangwa taxi uvuye i Kigali. Nta bwinjiriro bushoboka n'inzira yo gutumbagiza bwite.",
             "inyambo":    "Inka z'umwami (Inyambo) zirangwa n'amahembe maremare cyane kandi zerekana uburanga n'umuco gakondo w'u Rwanda.",
-            "rudahigwa":  "Umwami Mutara III Rudahigwa (1911–1959) yari umwami w'u Rwanda wateje imbere igihugu kandi akubaka ingoro ya kijyambere iherereye hano i Nyanza mu 1931.",
+            "rudahigwa":  "Umwami Mutara III Rudahigwa yavutse mu 1911 kandi yapfuye ku ya 25 Nyakanga 1959. Yabaye umwami w'u Rwanda kuva mu 1931 kugeza 1959 — imyaka 28 y'ubwami. Yakomeje imbere igihugu kandi yubatse ingoro ya kijyambere ya Art Deco iherereye hano i Nyanza mu 1931, igihe awugaruriwe n'Ababirigi.",
         },
         "fr": {
             "history":    "Le Musée du Palais Royal à Nyanza offre un aperçu fascinant du système monarchique rwandais, avec une réplique du palais traditionnel en chaume et le palais Art Déco du Roi Mutara III Rudahigwa (construit en 1931).",
@@ -140,7 +140,7 @@ CORE_FACTS = {
             "exhibits":   "Les expositions majeures comprennent : la réplique du palais traditionnel en chaume, le palais Art Déco de 1931, les vaches royales Inyambo aux cornes majestueuses, et les insignes royaux (tambours, boucliers, objets cérémoniels).",
             "transport":  "Depuis Kigali, des bus réguliers desservent Nyanza (environ 2h). Des taxis et motos sont disponibles localement. La route est goudronnée et accessible.",
             "inyambo":    "Le musée abrite les vaches royales Inyambo, célèbres pour leurs cornes majestueuses et leur dressage exceptionnel. Elles symbolisent la royauté rwandaise.",
-            "rudahigwa":  "Le Roi Mutara III Rudahigwa (1911–1959) était un souverain réformateur et visionnaire. Il a construit le palais Art Déco en 1931 et a joué un rôle crucial dans la modernisation du Rwanda.",
+            "rudahigwa":  "Le Roi Mutara III Rudahigwa est né en 1911 et est décédé le 25 juillet 1959. Il a régné sur le Rwanda de 1931 à 1959 — soit 28 ans de règne. Souverain réformateur et visionnaire, il a construit le palais Art Déco en 1931 lors de son intronisation imposée par les autorités coloniales belges.",
         },
         "en": {
             "history":    "The King's Palace Museum in Nyanza showcases Rwanda's rich monarchical history, featuring a traditional thatched palace replica and the modern Art Deco residence of King Mutara III Rudahigwa, built in 1931.",
@@ -150,7 +150,7 @@ CORE_FACTS = {
             "exhibits":   "Key exhibits: the traditional thatched palace (replica of the royal residence), the 1931 Art Deco palace, the famous Inyambo royal cattle with extraordinary long horns, and royal regalia including drums, shields, and ceremonial items.",
             "transport":  "From Kigali, take a bus to Nyanza (about 2 hours). Taxis and moto-taxis are available. The road is paved and in good condition.",
             "inyambo":    "The royal Inyambo cattle are the museum's living highlight — their extraordinary long horns and graceful demeanor make them a unique cultural symbol of Rwandan royalty.",
-            "rudahigwa":  "King Mutara III Rudahigwa (1911–1959) was a visionary ruler who built the modern Art Deco palace here in 1931 and worked to modernize Rwanda while preserving its cultural heritage.",
+            "rudahigwa":  "King Mutara III Rudahigwa was born in 1911 and died on 25 July 1959. He reigned as King of Rwanda from 1931 to 1959 — 28 years on the throne. He was installed by Belgian colonial authorities after his father Yuhi V Musinga was deposed. A visionary ruler, he built the Art Deco palace here in 1931 and worked to modernise Rwanda while preserving its cultural heritage.",
         }
     },
     "2": { # Ethnographic Museum
