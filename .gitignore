@@ -28,3 +28,18 @@ flask_*.log
 Thumbs.db
 .vscode/
 .idea/
+charts/
+
+# Presentation / documentation files (not needed for deployment)
+*.pptx
+*.docx
+PROJECT_JOURNAL.md
+PRESENTATION_SCRIPT.md
+presentation_script.md
+generate_slides.py
+generate_journal_docx.py
+generate_charts.py
+designs-prototype/
+
+# Temp / lock files created by Office
+~$*

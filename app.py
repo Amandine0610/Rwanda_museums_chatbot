@@ -1,6 +1,6 @@
 """
 Rwanda Museum Chatbot - RAG-based chatbot using Chroma DB + Gemini LLM
-Version: 3.9 (Visual Confirmation - Total Victory)
+Version: 4.3 (Language Enforcement + Relevance Guard)
 Supports: English, French, Kinyarwanda for ALL Museums
 """
 
@@ -471,6 +471,30 @@ def get_core_fact(query, museum_id, language):
              .replace("\u2019", " ").replace("\u2018", " ").replace("'", " ")
              .replace("\u201c", " ").replace("\u201d", " "))
 
+    # ── Museum name / translation triggers (HIGHEST PRIORITY — before location) ──
+    # Catches questions like "what is this called in Kinyarwanda?", "comment s'appelle ce musée?"
+    if any(k in q_low for k in [
+        "what do you call", "how do we call", "how do you call", "what is it called",
+        "what is this called", "what is the name", "name in kinyarwanda",
+        "name in french", "name in english", "kinyarwanda name", "french name",
+        "english name", "translate the name", "nom en", "appelle", "s appelle",
+        "comment appelle", "witwa iki", "izina ryayo", "izina ry", "izina muri",
+        "izina mu", "bita iki", "bita gute", "ibitwa iki"
+    ]):
+        m_info = MUSEUM_NAMES.get(m_id, {})
+        en_name = m_info.get('en', '')
+        fr_name = m_info.get('fr', '')
+        rw_name = m_info.get('rw', '')
+        if language == 'rw':
+            return (f"Iyi nzu ndangamurage yitwa '{rw_name}' mu Kinyarwanda. "
+                    f"Mu Cyongereza ni '{en_name}', kandi mu Gifaransa ni '{fr_name}'.")
+        elif language == 'fr':
+            return (f"Ce musée s'appelle '{fr_name}' en français. "
+                    f"En anglais : '{en_name}', et en kinyarwanda : '{rw_name}'.")
+        else:
+            return (f"In English it is called '{en_name}'. "
+                    f"In French: '{fr_name}', and in Kinyarwanda: '{rw_name}'.")
+
     # ── Specific person / artwork triggers ──────────────────────────────────
     if any(k in q_low for k in ["rudahigwa", "mutara"]):
         return lang_facts.get("rudahigwa")
@@ -504,34 +528,80 @@ def get_core_fact(query, museum_id, language):
         return lang_facts.get("kwibuka")
 
     # ── Admission / price triggers ───────────────────────────────────────────
-    if any(k in q_low for k in ["admission", "entrance fee", "entry fee", "ticket", "cost", "price", "how much", "free", "gratuit", "amafaranga", "kwinjira", "tarif", "billet", "payer"]):
+    if any(k in q_low for k in [
+        "admission", "entrance fee", "entry fee", "ticket", "cost", "price",
+        "how much", "free", "gratuit", "amafaranga", "kwinjira", "tarif",
+        "billet", "payer", "n'amafaranga angahe", "birishwa angahe",
+        "angahe", "ni angahe", "kwishyura", "amafaranga yo kwinjira",
+        "ibiciro", "iyishyura", "bwite"
+    ]):
         return lang_facts.get("admission")
 
     # ── Exhibits / what to see triggers ─────────────────────────────────────
-    if any(k in q_low for k in ["what to see", "what can i see", "exhibits", "collection", "gallery", "galleries", "display", "what is inside", "what does", "que voir", "exposition", "galerie", "ibiri mu ngoro", "ibikomeye", "ibigaragazwa", "highlights"]):
+    if any(k in q_low for k in [
+        "what to see", "what can i see", "exhibits", "collection", "gallery",
+        "galleries", "display", "what is inside", "what does", "que voir",
+        "exposition", "galerie", "ibiri mu ngoro", "ibikomeye", "ibigaragazwa",
+        "highlights", "ni iki", "nshobora kubona", "ibiriho", "biragaragazwa",
+        "ibigori", "ibirori", "ibiterekwa", "ibibarizwa", "mu ngoro"
+    ]):
         return lang_facts.get("exhibits") or lang_facts.get("highlights")
 
     # ── Transport / directions triggers ─────────────────────────────────────
-    if any(k in q_low for k in ["how to get", "directions", "transport", "bus", "taxi", "how do i reach", "how can i get", "comment arriver", "comment aller", "se rendre", "acces", "moyen de transport", "transport en commun", "gute", "uko nshobora kugera", "inzira yo kugera", "kugera aho"]):
+    if any(k in q_low for k in [
+        "how to get", "directions", "transport", "bus", "taxi", "how do i reach",
+        "how can i get", "comment arriver", "comment aller", "se rendre", "acces",
+        "moyen de transport", "transport en commun", "gute", "uko nshobora kugera",
+        "inzira yo kugera", "kugera aho", "nshobora kugera", "nkagera",
+        "nzageuka", "nzagera", "nazagera", "ntoya", "nzajya", "nzajye",
+        "kugenda", "ingendo", "imodoka", "moto", "bisi"
+    ]):
         return lang_facts.get("transport")
 
     # ── Opening hours triggers ───────────────────────────────────────────────
-    if any(k in q_low for k in ["opening hours", "closing time", "open", "close", "horaires", "ouvert", "ferme", "when do you open", "what time", "igihe", "amasaha", "saa", "hafungurwa", "hafungwa", "heure", "heures d ouverture"]):
+    if any(k in q_low for k in [
+        "opening hours", "closing time", "open", "close", "horaires", "ouvert",
+        "ferme", "when do you open", "what time", "igihe", "amasaha", "saa",
+        "hafungurwa", "hafungwa", "heure", "heures d ouverture",
+        "mfungurwa", "ifungurwa", "ifungwa", "ryari ifungurwa", "igihe cy",
+        "amasaha yo", "saa zingahe", "ni ryari", "ryari", "mu saa",
+        "bafungura", "bafunga", "bihe", "bitangira", "birangira"
+    ]):
         return lang_facts.get("hours")
 
     # ── Location triggers ────────────────────────────────────────────────────
-    if any(k in q_low for k in ["where is", "location", "address", "adresse", "situated", "situe", "how far", "distance", "aho iherereye", "kigali", "mu karere", "ou se trouve", "ou est le musee", "localisation"]):
+    if any(k in q_low for k in [
+        "where is", "where is it", "location", "address", "adresse", "situated", "situe",
+        "how far", "distance", "aho iherereye", "mu karere",
+        "ou se trouve", "ou est le musee", "localisation",
+        "iherereye he", "iherereye", "iri he", "iri hehe",
+        "aherereye", "uherereye", "icyambu", "akarere", "intara",
+        "km uvuye", "birometero", "kilometero", "how do i get to",
+        "si trouve", "se trouve"
+    ]):
         return lang_facts.get("location")
 
     # ── History / overview triggers ──────────────────────────────────────────
-    if any(k in q_low for k in ["history", "histoire", "amateka", "tell me about", "what is this", "overview", "about the museum", "describe", "who built", "when was", "background", "information", "info", "amakuru", "ubuzima bw"]):
+    if any(k in q_low for k in [
+        "history", "histoire", "amateka", "tell me about", "what is this",
+        "overview", "about the museum", "describe", "who built", "when was",
+        "background", "information", "info", "amakuru", "ubuzima bw",
+        "ni iki", "niki", "bwira", "mbwira", "sobanura", "ni gute",
+        "yacu", "yashingwa", "yabaye", "yashingwe", "inzu ndangamurage",
+        "ingoro", "ingabo", "igenda bite", "ikora iki"
+    ]):
         return lang_facts.get("history")
 
     return None
 
 
 def smart_fallback(query, context, language, museum_name):
-    """Build a clean, intelligent response from context chunks when Gemini is unavailable."""
+    """
+    Offline fallback used when Gemini is unavailable.
+    Extracts the most relevant sentences from context chunks.
+    For Kinyarwanda, we attempt a second Gemini call asking specifically for
+    a Kinyarwanda translation so visitors don't receive a raw English answer.
+    """
     no_info = {
         'en': (f"I'm sorry, I don't have specific details about that for {museum_name}. "
                f"Feel free to ask about our history, opening hours, admission, location, exhibits, or how to get here."),
@@ -543,15 +613,17 @@ def smart_fallback(query, context, language, museum_name):
     if not context:
         return no_info.get(language, no_info['en'])
 
-    # Build a pool of clean sentences from all retrieved chunks
+    # Build a deduplicated pool of clean sentences from all retrieved chunks
+    seen_sents = set()
     all_sentences = []
     for chunk in context:
         cleaned = clean_text(chunk)
-        # Split on sentence endings
         for sent in re.split(r'(?<=[.!?])\s+', cleaned):
             sent = sent.strip()
-            # Only keep substantive sentences, filter out orphaned labels
-            if len(sent) > 30 and not re.match(r'^[A-Z\s]+:$', sent):
+            # Normalise for dedup check (lowercase, collapse spaces)
+            sent_key = re.sub(r'\s+', ' ', sent.lower())
+            if len(sent) > 30 and not re.match(r'^[A-Z\s]+:$', sent) and sent_key not in seen_sents:
+                seen_sents.add(sent_key)
                 all_sentences.append(sent)
 
     if not all_sentences:
@@ -560,7 +632,8 @@ def smart_fallback(query, context, language, museum_name):
     # Score sentences by keyword overlap with the visitor's query
     stop_words = {'what', 'is', 'the', 'a', 'an', 'how', 'when', 'where', 'who', 'why',
                   'me', 'tell', 'i', 'can', 'do', 'de', 'le', 'la', 'les', 'du', 'en',
-                  'un', 'une', 'this', 'that', 'are', 'was', 'were', 'and', 'or', 'of'}
+                  'un', 'une', 'this', 'that', 'are', 'was', 'were', 'and', 'or', 'of',
+                  'ni', 'mu', 'ku', 'na', 'nta', 'ari', 'wa', 'ya', 'za', 'ba', 'bi', 'bu'}
     q_words = set(re.sub(r'[^\w\s]', '', query.lower()).split()) - stop_words
 
     def score(s):
@@ -568,44 +641,160 @@ def smart_fallback(query, context, language, museum_name):
         return len(q_words & s_words)
 
     ranked = sorted(all_sentences, key=score, reverse=True)
-    # Take the 2 most relevant sentences
     top = ranked[:2]
     core_info = ' '.join(top)
 
-    # Wrap with language-appropriate framing
+    # For Kinyarwanda: try a lightweight Gemini translation call so the visitor
+    # does not receive raw English sentences wrapped in a Kinyarwanda frame.
+    if language == 'rw':
+        translate_prompt = (
+            f"Hindura aya magambo mu Kinyarwanda gusa (ntukongere na kimwe, hindura gusa):\n\n{core_info}"
+        )
+        translated = call_gemini(translate_prompt)
+        if translated:
+            return f"Nk'uko bigaragazwa n'amakuru dufite muri {museum_name}: {clean_text(translated)}"
+        # If translation also failed, return the Kinyarwanda no-info message
+        return no_info['rw']
+
     frames = {
         'en': f"Based on our records at {museum_name}: {core_info}",
         'fr': f"D'après les archives du {museum_name} : {core_info}",
-        'rw': f"Nk'uko bigaragazwa n'amakuru dufite muri {museum_name}: {core_info}"
     }
     return frames.get(language, frames['en'])
 
 def generate_response(query, context, language, museum_id, museum_name):
+    # ── Greeting detection — a warm reply that is NOT the full welcome message ──
+    q_strip = query.lower().strip().rstrip('!.,?')
+    GREETINGS = {
+        'en': {'hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening',
+               'howdy', 'greetings', 'sup', 'good day'},
+        'fr': {'bonjour', 'bonsoir', 'salut', 'coucou', 'bonne journée',
+               'bonne matinée', 'bonne soirée', 'allô', 'allo'},
+        'rw': {'muraho', 'mwaramutse', 'mwiriwe', 'bite', 'amakuru', 'bite se',
+               'witwa', 'ndakuramutsa', 'salut', 'hello', 'hi'},
+    }
+    all_greetings = {g for gs in GREETINGS.values() for g in gs}
+    if q_strip in all_greetings or q_strip in GREETINGS.get(language, set()):
+        greeting_replies = {
+            'en': (f"Hello! Welcome back. I'm your Digital Curator at {museum_name}. "
+                   f"How can I help you today? You can ask me about our history, exhibits, "
+                   f"opening hours, admission, or how to get here."),
+            'fr': (f"Bonjour ! Heureux de vous retrouver au {museum_name}. "
+                   f"Je suis votre Conservateur Numérique. Comment puis-je vous aider ? "
+                   f"Vous pouvez me poser des questions sur l'histoire, les expositions, "
+                   f"les horaires, les tarifs ou comment nous rejoindre."),
+            'rw': (f"Muraho! Ndishimye kugutumirira muri {museum_name}. "
+                   f"Ndi umurinzi w'amateka wawe. Nakubaza iki uyu munsi? "
+                   f"Ushobora kubaza amateka, ibiri mu ngoro, amasaha yo gufungurwa, "
+                   f"kwinjira, cyangwa uburyo bwo kugera aho."),
+        }
+        return greeting_replies.get(language, greeting_replies['en'])
+
+    # ── Yes / No / Affirmation / Negation handling ───────────────────────────
+    YES_WORDS = {
+        'en': {'yes', 'yeah', 'yep', 'yup', 'sure', 'ok', 'okay', 'alright',
+               'of course', 'absolutely', 'please', 'go ahead', 'certainly'},
+        'fr': {'oui', 'ouais', 'bien sûr', 'bien sur', 'certainement',
+               'absolument', 'ok', 'okay', 'd accord', 'volontiers', 's il vous plaît'},
+        'rw': {'yego', 'yego cyane', 'ni cyo', 'nibyo', 'mbese yego',
+               'ok', 'okay', 'banza', 'ngaho'},
+    }
+    NO_WORDS = {
+        'en': {'no', 'nope', 'nah', 'not really', 'never mind', 'nevermind',
+               'no thanks', 'no thank you', 'stop', 'cancel', 'that is all',
+               "that's all", 'nothing else', 'done'},
+        'fr': {'non', 'nan', 'pas vraiment', 'laisse tomber', 'laissez tomber',
+               'non merci', 'rien d autre', 'rien dautre', 'c est tout',
+               'cest tout', 'arrêtez', 'arreter', 'annuler'},
+        'rw': {'oya', 'oya ndabashimiye', 'oya murakoze', 'nta kintu', 'birahagije',
+               'ndashimiye', 'urakoze', 'murakoze', 'nta kindi', 'birakwiye'},
+    }
+    all_yes = {w for ws in YES_WORDS.values() for w in ws}
+    all_no  = {w for ws in NO_WORDS.values() for w in ws}
+
+    if q_strip in all_yes or q_strip in YES_WORDS.get(language, set()):
+        if context:
+            return apply_persona(context[0], language)
+        yes_prompts = {
+            'en': (f"Of course! Here are some things you can explore at {museum_name}: "
+                   f"the history and founding story, current exhibits, opening hours, "
+                   f"admission fees, and directions. What would you like to know more about?"),
+            'fr': (f"Bien sûr ! Voici ce que vous pouvez découvrir au {museum_name} : "
+                   f"l'histoire et l'origine, les expositions, les horaires, "
+                   f"les tarifs et comment y accéder. Que souhaitez-vous savoir ?"),
+            'rw': (f"Yego, ndishimye kukufasha! Hari ibintu byinshi ushobora kumenya "
+                   f"kuri {museum_name}: amateka yayo, ibiri mu ngoro, amasaha yo gufungurwa, "
+                   f"kwinjira no kugera aho. Ni iki ushaka kumenya?"),
+        }
+        return yes_prompts.get(language, yes_prompts['en'])
+
+    if q_strip in all_no or q_strip in NO_WORDS.get(language, set()):
+        no_replies = {
+            'en': (f"No problem at all! Feel free to come back anytime you have a question "
+                   f"about {museum_name}. Enjoy your visit!"),
+            'fr': (f"Pas de problème ! N'hésitez pas à revenir quand vous aurez d'autres "
+                   f"questions sur {museum_name}. Bonne visite !"),
+            'rw': (f"Nta kibazo! Ushobora kugaruka igihe cyose ufite ikibazo "
+                   f"kijyanye na {museum_name}. Ugende neza kandi unezerwe!"),
+        }
+        return no_replies.get(language, no_replies['en'])
+
+    # ── "More" / "tell me more" filler — continue from context ──────────────
+    MORE_WORDS = {
+        'en': {'more', 'tell me more', 'continue', 'go on', 'elaborate',
+               'and then', 'what else', 'keep going'},
+        'fr': {'plus', 'encore', 'continuez', 'dites m en plus', 'dites moi plus',
+               'et ensuite', 'quoi d autre', 'continuez s il vous plaît'},
+        'rw': {'iyindi', 'mbwire ibindi', 'komeza', 'ukomeze', 'ibindi',
+               'n ibindi', 'sobanura', 'nsobanurire'},
+    }
+    all_more = {w for ws in MORE_WORDS.values() for w in ws}
+    if q_strip in all_more or q_strip in MORE_WORDS.get(language, set()):
+        if context:
+            return apply_persona(context[0], language)
+
     # Core Facts (Aggressive Priority)
     core_text = get_core_fact(query, museum_id, language)
     if core_text: return apply_persona(core_text, language)
 
-    # Filler Logic
-    fillers = ['yes', 'yego', 'oui', 'more', 'iyindi', 'plus', 'tell me more', 'mbwire ibindi']
-    if query.lower().strip() in fillers and context:
-        return apply_persona(context[0], language)
+    # Build a language-specific prompt — INSTRUCTIONS are written in the target language
+    # so the model cannot default to English when the language is French or Kinyarwanda.
+    context_text = "\n\n".join(clean_text(c) for c in context) if context else ""
 
-    # AI Prompt via Gemini REST API
-    system_prompts = {
-        'en': f"You are the Digital Curator for {museum_name}. Speak warmly and professionally. RESPOND ONLY IN ENGLISH.",
-        'fr': f"Vous êtes le Conservateur Numérique du {museum_name}. Parlez chaleureusement et professionnellement. RÉPONDEZ UNIQUEMENT EN FRANÇAIS.",
-        'rw': f"Uri Umurinzi w'amateka muri {museum_name}. Vuga mu buryo bw'umwuga kandi wubashye. SUBIZA MU KINYARWANDA GUSA. Ntukoreshe Icyongereza cyangwa Igifaransa."
-    }
+    if language == 'rw':
+        prompt = (
+            f"Uri Umurinzi w'amateka muri {museum_name}. "
+            f"SUBIZA MU KINYARWANDA GUSA — ntukoreshe na kimwe cy'Icyongereza cyangwa Igifaransa mu gisubizo cyawe.\n\n"
+            f"AMAKURU Y'INZU NDANGAMURAGE:\n{context_text if context_text else '(Nta makuru arambuye ahari)'}\n\n"
+            f"IKIBAZO CY'UMUSURA: {query}\n\n"
+            f"AMABWIRIZA: Subiza mu magambo 2-4 gusa, wishingiye ku makuru yo hejuru. "
+            f"Ntukoreshe markdown, akabariro, inyandiko z'ingaruka, cyangwa ibyiciro. "
+            f"Niba amakuru adahari, bwira umusura neza no kumugisha ibibazo bijyanye n'inzu ndangamurage. "
+            f"SUBIZA MU KINYARWANDA GUSA."
+        )
+    elif language == 'fr':
+        prompt = (
+            f"Vous êtes le Conservateur Numérique du {museum_name}. "
+            f"RÉPONDEZ UNIQUEMENT EN FRANÇAIS — n'utilisez pas d'anglais ni de kinyarwanda dans votre réponse.\n\n"
+            f"BASE DE CONNAISSANCES DU MUSÉE :\n{context_text if context_text else '(Aucun contexte disponible)'}\n\n"
+            f"QUESTION DU VISITEUR : {query}\n\n"
+            f"INSTRUCTIONS : Répondez en 2 à 4 phrases claires en utilisant uniquement les informations ci-dessus. "
+            f"N'utilisez pas de markdown, de puces, d'astérisques ou de titres. "
+            f"Si l'information n'est pas disponible, dites-le poliment et suggérez des sujets connexes. "
+            f"RÉPONDEZ UNIQUEMENT EN FRANÇAIS."
+        )
+    else:  # English (default)
+        prompt = (
+            f"You are the Digital Curator for {museum_name}. Speak warmly and professionally. "
+            f"RESPOND ONLY IN ENGLISH.\n\n"
+            f"MUSEUM KNOWLEDGE BASE:\n{context_text if context_text else '(No archive context available)'}\n\n"
+            f"VISITOR QUESTION: {query}\n\n"
+            f"INSTRUCTIONS: Answer in 2-4 clear sentences using only the knowledge base above. "
+            f"Do NOT use markdown, bullet points, asterisks, or headers. "
+            f"If information is not available, politely say so and suggest related topics. "
+            f"RESPOND ONLY IN ENGLISH."
+        )
 
-    context_text = "\n\n".join(clean_text(c) for c in context) if context else "(No archive context available)"
-    prompt = (
-        f"SYSTEM: {system_prompts.get(language, system_prompts['en'])}\n\n"
-        f"MUSEUM KNOWLEDGE BASE:\n{context_text}\n\n"
-        f"VISITOR QUESTION: {query}\n\n"
-        f"INSTRUCTIONS: Answer in 2-4 clear sentences using only the knowledge base above. "
-        f"Do NOT use markdown, bullet points, asterisks, or headers. "
-        f"If information is not available, politely say so and suggest related topics."
-    )
     ai_response = call_gemini(prompt)
     if ai_response:
         return clean_text(ai_response)
@@ -613,16 +802,78 @@ def generate_response(query, context, language, museum_id, museum_name):
     # ── Intelligent fallback: extract clean sentences from context ──
     return smart_fallback(query, context, language, museum_name)
 
+def detect_language(text):
+    """
+    Lightweight language detector based on unique character/word fingerprints.
+    Returns 'rw', 'fr', or 'en'.  Used as a safety-net when the client sends
+    the wrong language tag (e.g. language='en' but the visitor typed in Kinyarwanda).
+    """
+    t = text.lower()
+    # Strong Kinyarwanda markers: common words / prefixes that never appear in EN/FR
+    rw_markers = ['ndashaka', 'ni iki', 'ni nde', 'ni he', 'ni ryari', 'ni gute',
+                  'urakoze', 'mwaramutse', 'mwiriwe', 'bite', 'amakuru', 'bite se',
+                  'yego', 'oya', 'ibikomeye', 'ngaho', 'ubwoko', 'amasaha',
+                  'kwinjira', 'amateka', 'igihe', 'aho iherereye', 'nshaka',
+                  'umurinzi', 'ingoro', 'inzu', 'muraho', 'murakoze',
+                  'ndabashimiye', 'ni angahe', 'birishwa', 'hafungurwa',
+                  'hafungwa', 'ibiri mu ngoro', 'nshobora kugera']
+    fr_markers = ['est-ce', "qu'est", 'comment', 'horaires', "qu'il", 'quoi',
+                  "c'est", 'bonjour', 'bonsoir', 'salut', 'merci', 'pouvez',
+                  'voulez', "j'aimerais", 'musée', 'exposition', 'entrée',
+                  'tarif', 'billet', 'ouvert', 'fermé', 'ferme', 'gratuit']
+    rw_score = sum(1 for m in rw_markers if m in t)
+    fr_score  = sum(1 for m in fr_markers if m in t)
+    if rw_score >= 1:
+        return 'rw'
+    if fr_score >= 1:
+        return 'fr'
+    return None  # Cannot determine — keep client-supplied language
+
+
+# Distance threshold for relevance guard.
+# ChromaDB's default ONNX embedding returns cosine distances (0 = identical, 2 = opposite).
+# Values > 1.45 reliably indicate the query is unrelated to any museum content.
+RELEVANCE_THRESHOLD = 1.45
+
+# Topics the chatbot should firmly refuse regardless of context match
+OUT_OF_SCOPE_PATTERNS = [
+    r'\b(weather|forecast|temperature|rain|climate)\b',
+    r'\b(recipe|cook|food|restaurant|hotel|flight|booking)\b',
+    r'\b(politics|election|president|government|parliament)\b',
+    r'\b(sport|football|basketball|soccer|olympic)\b',
+    r'\b(write.*email|send.*email|draft.*letter|homework|essay)\b',
+    r'\b(stock|invest|crypto|bitcoin|finance|money transfer)\b',
+    r'\b(translate|traduction)\b',
+]
+
+def is_out_of_scope(query, best_distance):
+    """Return True if the query is clearly not about the museum."""
+    q = query.lower()
+    for pat in OUT_OF_SCOPE_PATTERNS:
+        if re.search(pat, q):
+            return True
+    # If ChromaDB found nothing even close, treat as out-of-scope
+    if best_distance is not None and best_distance > RELEVANCE_THRESHOLD:
+        return True
+    return False
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     data = request.get_json()
     msg = data.get('query') or data.get('message', '')
     lang = data.get('language', 'en')
     mid = str(data.get('museumId')) if data.get('museumId') and str(data.get('museumId')).lower() != 'none' else '1'
-    
+
+    # Safety-net: if the visitor's text looks like a different language, correct it
+    detected = detect_language(msg)
+    if detected and detected != lang:
+        print(f"[{INSTANCE_ID}] Language override: client sent '{lang}', detected '{detected}'")
+        lang = detected
+
     m_info = MUSEUM_NAMES.get(mid, MUSEUM_NAMES["1"])
     m_name = m_info.get(lang, m_info['en'])
-    
+
     if msg == 'special:welcome':
         res = {
             'en': f"Welcome to {m_name}. I am your Digital Curator. How may I assist your exploration today?",
@@ -631,25 +882,54 @@ def chat():
         }
         return jsonify({'response': res.get(lang, res['en'])})
 
-    # Retrieval via ChromaDB (query_texts — no manual embedding needed)
+    # Retrieval via ChromaDB — include distances for relevance gating
+    context = []
+    best_distance = None
     try:
         coll = get_db()
         total = coll.count()
         safe_n = max(1, min(4, total)) if total > 0 else 0
-        context = []
         if safe_n > 0:
-            results = coll.query(query_texts=[msg], n_results=safe_n, where={"museum_id": mid})
+            results = coll.query(
+                query_texts=[msg], n_results=safe_n,
+                where={"museum_id": mid},
+                include=["documents", "distances"]
+            )
             context = results['documents'][0] if results['documents'] else []
-            # If the where-filter returned nothing, broaden to all museums
+            distances = results['distances'][0] if results.get('distances') else []
+            if distances:
+                best_distance = min(distances)
+            # If the museum-specific filter returned nothing, broaden to all museums
             if not context:
-                results = coll.query(query_texts=[msg], n_results=safe_n)
+                results = coll.query(
+                    query_texts=[msg], n_results=safe_n,
+                    include=["documents", "distances"]
+                )
                 context = results['documents'][0] if results['documents'] else []
+                distances = results['distances'][0] if results.get('distances') else []
+                if distances:
+                    best_distance = min(distances)
     except Exception as retrieval_err:
         print(f"[{INSTANCE_ID}] Retrieval error: {retrieval_err}")
         context = []
 
+    # ── Out-of-scope guard ───────────────────────────────────────────────────
+    if is_out_of_scope(msg, best_distance):
+        oos = {
+            'en': (f"I'm your Digital Curator at {m_name} and I can only assist with museum-related "
+                   f"topics such as our history, exhibits, opening hours, admission, and directions. "
+                   f"How can I help you explore the museum today?"),
+            'fr': (f"Je suis le Conservateur Numérique du {m_name} et je peux uniquement répondre "
+                   f"aux questions liées au musée : histoire, expositions, horaires, tarifs et accès. "
+                   f"Comment puis-je vous aider à explorer le musée ?"),
+            'rw': (f"Ndi umurinzi w'amateka wa {m_name} kandi nshobora gusa gufasha mu bibazo "
+                   f"bijyanye n'inzu ndangamurage nk'amateka yayo, ibiri muri yo, amasaha yo gufungurwa, "
+                   f"kwinjira no kugera aho. Nagufasha iki uyu munsi?")
+        }
+        return jsonify({'response': oos.get(lang, oos['en']), 'instance': INSTANCE_ID, 'version': '4.3'})
+
     response = generate_response(msg, context, lang, mid, m_name)
-    return jsonify({'response': response, 'instance': INSTANCE_ID, 'version': '4.2'})
+    return jsonify({'response': response, 'instance': INSTANCE_ID, 'version': '4.3'})
 
 @app.route('/api/status', methods=['GET'])
 def status():
