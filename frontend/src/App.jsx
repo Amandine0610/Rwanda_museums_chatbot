@@ -26,13 +26,13 @@ function App() {
             return;
         }
 
+        // Every visitor must accept the EULA once (localStorage) before the guide or chatbot.
+        // Covers direct visits, QR links (?museumId=…), and shared URLs.
+        setRequiresEula(true);
+        setEulaAccepted(isEulaAccepted());
+
         if (artId) setInitialArtifactId(parseInt(artId));
-        if (museumId) {
-            setInitialMuseumId(parseInt(museumId));
-            // A museumId in the URL means the visitor arrived via QR scan
-            setRequiresEula(true);
-            setEulaAccepted(isEulaAccepted());
-        }
+        if (museumId) setInitialMuseumId(parseInt(museumId));
 
         if (langCode && ['en', 'fr', 'rw'].includes(langCode)) {
             setLanguage(langCode);
