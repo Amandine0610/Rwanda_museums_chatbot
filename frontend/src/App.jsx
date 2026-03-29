@@ -2,12 +2,17 @@ import React, { useState, useEffect } from 'react';
 import LanguageSelector from './components/LanguageSelector';
 import ArtifactDetail from './components/ArtifactDetail';
 import QRAdmin from './components/QRAdmin';
+import EULAModal, { isEulaAccepted } from './components/EULAModal';
 
 function App() {
     const [language, setLanguage] = useState(null);
     const [initialArtifactId, setInitialArtifactId] = useState(null);
     const [initialMuseumId, setInitialMuseumId] = useState(null);
     const [showAdmin, setShowAdmin] = useState(false);
+    const [eulaAccepted, setEulaAccepted] = useState(false);
+    // true when the URL came from a QR scan (museumId present)
+    const [requiresEula, setRequiresEula] = useState(false);
+    const [eulaInitialLang, setEulaInitialLang] = useState('en');
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -22,16 +27,31 @@ function App() {
         }
 
         if (artId) setInitialArtifactId(parseInt(artId));
-        if (museumId) setInitialMuseumId(parseInt(museumId));
+        if (museumId) {
+            setInitialMuseumId(parseInt(museumId));
+            // A museumId in the URL means the visitor arrived via QR scan
+            setRequiresEula(true);
+            setEulaAccepted(isEulaAccepted());
+        }
 
-        // If a museumId is in the URL, auto-select language (default English)
-        // so the visitor lands directly in the museum portal after the language screen
         if (langCode && ['en', 'fr', 'rw'].includes(langCode)) {
             setLanguage(langCode);
+            setEulaInitialLang(langCode);
         }
     }, []);
 
     if (showAdmin) return <QRAdmin />;
+
+    // Show EULA before anything else when the visitor scans a QR code
+    if (requiresEula && !eulaAccepted) {
+        return (
+            <EULAModal
+                initialLang={eulaInitialLang}
+                onAccept={() => setEulaAccepted(true)}
+                onDecline={() => {/* declined state handled inside EULAModal */}}
+            />
+        );
+    }
 
     return language
         ? <ArtifactDetail
