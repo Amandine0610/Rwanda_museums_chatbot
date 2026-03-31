@@ -24,10 +24,17 @@ MODEL_NAME = 'sentence-transformers/all-MiniLM-L6-v2'
 # Environment Setup
 try:
     from dotenv import load_dotenv
-    ml_env = os.path.join(os.path.dirname(__file__), 'ml-service', '.env')
-    if os.path.exists(ml_env): load_dotenv(ml_env)
-    else: load_dotenv()
-except ImportError: pass
+    _base = os.path.dirname(os.path.abspath(__file__))
+    _ml_env = os.path.join(_base, 'ml-service', '.env')
+    _root_env = os.path.join(_base, '.env')
+    if os.path.exists(_ml_env):
+        load_dotenv(_ml_env)
+    if os.path.exists(_root_env):
+        load_dotenv(_root_env, override=False)  # root fills gaps; ml-service wins if both set
+    if not os.path.exists(_ml_env) and not os.path.exists(_root_env):
+        load_dotenv()
+except ImportError:
+    pass
 
 # LLM Config — uses Gemini REST API directly (no SDK version dependency)
 import requests as _requests
@@ -70,9 +77,9 @@ def call_gemini(prompt):
                    f"{model}:generateContent?key={_GEMINI_API_KEY}")
             payload = {
                 "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.6, "maxOutputTokens": 350, "topP": 0.9}
+                "generationConfig": {"temperature": 0.55, "maxOutputTokens": 512, "topP": 0.9}
             }
-            resp = _requests.post(url, json=payload, timeout=20)
+            resp = _requests.post(url, json=payload, timeout=35)
             if resp.status_code == 200:
                 data = resp.json()
                 candidates = data.get("candidates", [])
@@ -191,6 +198,8 @@ CORE_FACTS = {
             "exhibits":   "Imurikagurisha rikomeye ni 'Inzira y'Inzitane' (Inzira y'Ubutwari) rigaragaza urugendo rw'u Rwanda rwo kwiyubaka mu myaka 30 (1994–2024) binyuze mu buhanzi n'amashusho. Kandi haritwa ubuhanzi bw'umuhanzi w'u Rwanda n'Afurika.",
             "founder":    "Ingoro Ingabo yashinzwe na King Ngabo, umuhanzi n'umushanditsi w'ikerekezo w'umunyarwanda washatse kwerekana amateka n'icyerekezo cy'u Rwanda binyuze mu buhanzi.",
             "inzira":     "Imurikagurisha rya 'Inzira y'Inzitane' rigaragaza urugendo rw'u Rwanda rwo kwiyubaka mu myaka 30 ishize binyuze mu buhanzi n'ibitekerezo. Ni imurikagurisha rirasira cyane.",
+            "kamwe":      "Imurikagurisha 'KAMWE' ('A Hundred Days of Death') ni imurikagurisha rirasira rijyanye no kwibuka iminsi 100 ya Jenoside yakorewe Abatutsi mu 1994. Ryerekana uburyo ubugeni bushobora gutanga isomo, kwibuka no gutunganya ibikomere by'umuryango wose. Mu murikagurisha harimo ibihangano n'ibikoresho bigaragaza agahinda, ukwibuka inzirakarengane, no gukomeza kwigira ku mateka kugira ngo bitazongera. Si inzu ndangamurage y'intambara ya RPA ku CND — aho ni ahantu h'ubuhanzi na kamere y'urwibutso muri Ingoro Ingabo i Rebero.",
+            "different_wounds": "Imurikagurisha 'DIFFERENT, SAME WOUNDS' (2025, riguma kugeza ku ya 29 Mata 2026) ry'umuhanzi King Ngabo rijyanye n'ubwiyunge mu bwoko: twita ku bitandukanye by'uruhu, ubwoko, n'umuco, ariko tureba uburyo dukoresha ibikomere twese dukoresha. Insanganyamatsiko: ubumwe mu bwoko, inzitwazo z'isi yose, no gukira hamwe.",
             "transport":  "Ingoro iherereye i Rebero, Kigali. Ushobora gufata imodoka ya gutumbagiza (moto) cyangwa taxi uvuye mu gace ka Kigali.",
         },
         "fr": {
@@ -201,6 +210,8 @@ CORE_FACTS = {
             "exhibits":   "L'exposition phare 'Inzira y'Inzitane' (Chemin de la Résilience) documente les 30 ans de reconstruction du Rwanda (1994–2024) à travers des installations artistiques immersives, peintures et multimédia.",
             "founder":    "Le musée a été fondé par l'artiste King Ngabo, entrepreneur culturel rwandais engagé dans la promotion de l'art africain contemporain et de la narration visuelle.",
             "inzira":     "L'exposition 'Inzira y'Inzitane' est une installation artistique immersive qui retrace 30 ans de résilience et de reconstruction du Rwanda (1994-2024). C'est l'exposition principale du musée.",
+            "kamwe":      "KAMWE (« Cent jours de mort ») est une exposition immersive au Musée Ingabo qui porte sur les cent jours du génocide contre les Tutsi en 1994. Elle utilise l'art pour explorer la mémoire collective, le deuil, la survie et l'importance de se souvenir. Les visiteurs découvrent des installations qui honorent les victimes et invitent à la réflexion. Ce n'est pas le musée militaire de la campagne de libération au Parlement — c'est un espace artistique et mémoriel au village culturel de Rebero.",
+            "different_wounds": "« Different, Same Wounds » (2025, jusqu'au 29 avril 2026) par King Ngabo explore l'unité au-delà des différences visibles (couleur de peau, race, culture) et les blessures partagées de l'humanité : diversité, guérison collective et lien entre les peuples.",
             "transport":  "Le musée est sur la Colline de Rebero à Kigali. Accessible en moto-taxi ou en taxi depuis le centre-ville.",
         },
         "en": {
@@ -211,6 +222,8 @@ CORE_FACTS = {
             "exhibits":   "The signature exhibition is 'Inzira y'Inzitane' (Path of Resilience), an immersive installation documenting Rwanda's 30-year reconstruction journey (1994–2024) through art, paintings, and multimedia. The museum also features contemporary Rwandan and African artists.",
             "founder":    "Founded by visionary Rwandan artist King Ngabo, the museum was created to celebrate Rwandan heritage and tell the story of Africa's resilience through creative expression.",
             "inzira":     "The 'Inzira y'Inzitane' (Path of Resilience) exhibition is the museum's centerpiece — an immersive art journey showing Rwanda's 30-year transformation from tragedy to triumph, told through powerful visual storytelling.",
+            "kamwe":      "KAMWE ('A Hundred Days of Death') is an installation exhibition at Museum Ingabo that reflects on the hundred days of the 1994 Genocide against the Tutsi. Through art and installations it explores collective memory, trauma, survival, remembrance, and education toward never again. Visitors see works that honour victims and invite quiet reflection. Note: this is not the Campaign Against Genocide Museum at Parliament — Ingabo is a private art museum at Rebero, Kigali Cultural Village.",
+            "different_wounds": "'Different, Same Wounds' (2025, running through 29 April 2026) by King Ngabo asks us to look past visible differences like skin colour and culture to our shared humanity and shared wounds — themes of unity in diversity, healing, and global connection.",
             "transport":  "Located on Rebero Hill, Kigali. Take a moto-taxi or taxi from anywhere in Kigali city center.",
         }
     },
@@ -462,17 +475,20 @@ def apply_persona(text, lang):
     wrappers = PERSONA_WRAPPERS.get(lang, PERSONA_WRAPPERS['en'])
     return random.choice(wrappers).format(text=clean_text(text))
 
-def get_core_fact(query, museum_id, language):
+def resolve_core_fact(query, museum_id, language):
+    """
+    Returns (route_key, response_text) where route_key identifies which rule matched.
+    Used for reproducible evaluation; get_core_fact returns only the text.
+    route_key is None when no curated fact matches (LLM / RAG path).
+    """
     m_id = str(museum_id)
-    if m_id not in CORE_FACTS: return None
+    if m_id not in CORE_FACTS:
+        return (None, None)
     lang_facts = CORE_FACTS[m_id].get(language, CORE_FACTS[m_id].get('en', {}))
-    # Normalize: lower-case + collapse apostrophes/quotes so "amateka y ingoro" matches "amateka y'ingoro"
     q_low = (query.lower().strip()
              .replace("\u2019", " ").replace("\u2018", " ").replace("'", " ")
              .replace("\u201c", " ").replace("\u201d", " "))
 
-    # ── Museum name / translation triggers (HIGHEST PRIORITY — before location) ──
-    # Catches questions like "what is this called in Kinyarwanda?", "comment s'appelle ce musée?"
     if any(k in q_low for k in [
         "what do you call", "how do we call", "how do you call", "what is it called",
         "what is this called", "what is the name", "name in kinyarwanda",
@@ -486,48 +502,83 @@ def get_core_fact(query, museum_id, language):
         fr_name = m_info.get('fr', '')
         rw_name = m_info.get('rw', '')
         if language == 'rw':
-            return (f"Iyi nzu ndangamurage yitwa '{rw_name}' mu Kinyarwanda. "
+            text = (f"Iyi nzu ndangamurage yitwa '{rw_name}' mu Kinyarwanda. "
                     f"Mu Cyongereza ni '{en_name}', kandi mu Gifaransa ni '{fr_name}'.")
         elif language == 'fr':
-            return (f"Ce musée s'appelle '{fr_name}' en français. "
+            text = (f"Ce musée s'appelle '{fr_name}' en français. "
                     f"En anglais : '{en_name}', et en kinyarwanda : '{rw_name}'.")
         else:
-            return (f"In English it is called '{en_name}'. "
+            text = (f"In English it is called '{en_name}'. "
                     f"In French: '{fr_name}', and in Kinyarwanda: '{rw_name}'.")
+        return ("museum_name", text)
 
-    # ── Specific person / artwork triggers ──────────────────────────────────
     if any(k in q_low for k in ["rudahigwa", "mutara"]):
-        return lang_facts.get("rudahigwa")
+        v = lang_facts.get("rudahigwa")
+        return ("rudahigwa", v) if v else (None, None)
     if any(k in q_low for k in ["kakira", "prince kakira", "gisaka", "originate", "who created imigongo", "qui a cree", "iboneka he"]):
-        return lang_facts.get("kakira")
+        v = lang_facts.get("kakira")
+        return ("kakira", v) if v else (None, None)
     if any(k in q_low for k in ["kandt", "richard kandt", "colonial", "founded kigali", "fonde kigali", "yashinze kigali"]):
-        return lang_facts.get("kandt")
-    if any(k in q_low for k in ["ngabo", "king ngabo", "founder", "fondateur", "createur", "qui a fonde", "who founded", "washinze", "who started", "qui a cree le musee"]):
-        return lang_facts.get("founder")
+        v = lang_facts.get("kandt")
+        return ("kandt", v) if v else (None, None)
+    founder_sub = ["king ngabo", "founder", "fondateur", "createur", "qui a fonde", "who founded", "washinze", "who started", "qui a cree le musee"]
+    if any(k in q_low for k in founder_sub) or re.search(r"\bngabo\b", q_low):
+        v = lang_facts.get("founder")
+        return ("founder", v) if v else (None, None)
 
-    # ── Exhibition / collection triggers ────────────────────────────────────
     if any(k in q_low for k in ["inzira", "inzitane", "path of resilience", "resilience", "reconstruction", "parcours"]):
-        return lang_facts.get("inzira")
+        v = lang_facts.get("inzira")
+        return ("inzira", v) if v else (None, None)
+    if m_id == "3":
+        if any(k in q_low for k in [
+            "kamwe", "camwe", "hundred days of death", "a hundred days of",
+            "100 days of death", "exhibition kamwe", "kamwe exhibition", "the kamwe",
+            "imurikagurisha kamwe", "about kamwe", "tell me about kamwe", "what is kamwe",
+            "qu est ce que kamwe", "c est quoi kamwe",
+        ]):
+            val = lang_facts.get("kamwe")
+            if val:
+                return ("kamwe", val)
+        if any(k in q_low for k in ["iminsi 100", "cent jours de", "100-day", "100 days", "cent jours"]):
+            val = lang_facts.get("kamwe")
+            if val:
+                return ("kamwe", val)
+        if any(k in q_low for k in [
+            "different same wounds", "same wounds", "different, same", "unity in diversity",
+            "avril 2026", "april 2026", "exhibition 3", "third exhibition",
+        ]):
+            val = lang_facts.get("different_wounds")
+            if val:
+                return ("different_wounds", val)
     if any(k in q_low for k in ["imigongo", "zigzag", "cow dung", "bouse de vache", "geometric", "geometrique", "cow art"]):
-        return lang_facts.get("imigongo")
+        v = lang_facts.get("imigongo")
+        return ("imigongo", v) if v else (None, None)
     if any(k in q_low for k in ["inyambo", "inka z umwami", "royal cattle", "royal cow", "vache royale", "long horn", "ingumba"]):
-        return lang_facts.get("inyambo")
+        v = lang_facts.get("inyambo")
+        return ("inyambo", v) if v else (None, None)
     if any(k in q_low for k in ["agaseke", "basket", "panier", "weaving", "tissage", "ingoma", "drums", "tambour"]):
-        return lang_facts.get("highlights") or lang_facts.get("exhibits")
+        v = lang_facts.get("highlights") or lang_facts.get("exhibits")
+        return ("exhibits_highlights", v) if v else (None, None)
     if any(k in q_low for k in ["gorilla", "gorille", "ingagi", "mountain gorilla", "golden monkey", "biodiversity", "biodiversite"]):
-        return lang_facts.get("gorilla") or lang_facts.get("highlights")
+        v = lang_facts.get("gorilla") or lang_facts.get("highlights")
+        return ("gorilla", v) if v else (None, None)
     if any(k in q_low for k in ["herbal", "herbe", "medicinal plant", "plante medicinale", "rooftop garden", "akaravumu"]):
-        return lang_facts.get("highlights") or lang_facts.get("exhibits")
+        v = lang_facts.get("highlights") or lang_facts.get("exhibits")
+        return ("exhibits_highlights", v) if v else (None, None)
     if any(k in q_low for k in ["children memorial", "memorial enfants", "urwibutso rw abana", "child victim"]):
-        return lang_facts.get("children")
+        v = lang_facts.get("children")
+        return ("children", v) if v else (None, None)
 
-    # ── CAG / Genocide / Kwibuka triggers ───────────────────────────────────
-    if any(k in q_low for k in ["cnd", "siege", "rescue", "100 days", "100-day", "cent jours", "iminsi 100", "liberation campaign", "rpa campaign"]):
-        return lang_facts.get("cnd")
+    if m_id == "4":
+        if any(k in q_low for k in ["cnd", "siege", "rescue", "100 days", "100-day", "cent jours", "iminsi 100", "liberation campaign", "rpa campaign"]):
+            v = lang_facts.get("cnd")
+            if v:
+                return ("cnd", v)
     if any(k in q_low for k in ["kwibuka", "commemor", "april 7", "7 april", "7 mata", "remembrance", "commemoration", "memorial day"]):
-        return lang_facts.get("kwibuka")
+        v = lang_facts.get("kwibuka")
+        if v:
+            return ("kwibuka", v)
 
-    # ── Admission / price triggers ───────────────────────────────────────────
     if any(k in q_low for k in [
         "admission", "entrance fee", "entry fee", "ticket", "cost", "price",
         "how much", "free", "gratuit", "amafaranga", "kwinjira", "tarif",
@@ -535,9 +586,9 @@ def get_core_fact(query, museum_id, language):
         "angahe", "ni angahe", "kwishyura", "amafaranga yo kwinjira",
         "ibiciro", "iyishyura", "bwite"
     ]):
-        return lang_facts.get("admission")
+        v = lang_facts.get("admission")
+        return ("admission", v) if v else (None, None)
 
-    # ── Exhibits / what to see triggers ─────────────────────────────────────
     if any(k in q_low for k in [
         "what to see", "what can i see", "exhibits", "collection", "gallery",
         "galleries", "display", "what is inside", "what does", "que voir",
@@ -546,9 +597,9 @@ def get_core_fact(query, museum_id, language):
         "ibiriho", "biragaragazwa", "ibigori", "ibirori", "ibiterekwa",
         "ibibarizwa", "mu ngoro", "mu nzu ndangamurage"
     ]):
-        return lang_facts.get("exhibits") or lang_facts.get("highlights")
+        v = lang_facts.get("exhibits") or lang_facts.get("highlights")
+        return ("exhibits_general", v) if v else (None, None)
 
-    # ── Transport / directions triggers ─────────────────────────────────────
     if any(k in q_low for k in [
         "how to get", "directions", "transport", "bus", "taxi", "how do i reach",
         "how can i get", "comment arriver", "comment aller", "se rendre", "acces",
@@ -557,9 +608,9 @@ def get_core_fact(query, museum_id, language):
         "nzageuka", "nzagera", "nazagera", "ntoya", "nzajya", "nzajye",
         "kugenda", "ingendo", "imodoka", "moto", "bisi"
     ]):
-        return lang_facts.get("transport")
+        v = lang_facts.get("transport")
+        return ("transport", v) if v else (None, None)
 
-    # ── Opening hours triggers ───────────────────────────────────────────────
     if any(k in q_low for k in [
         "opening hours", "closing time", "open", "close", "horaires", "ouvert",
         "ferme", "when do you open", "what time", "igihe", "amasaha", "saa",
@@ -568,9 +619,9 @@ def get_core_fact(query, museum_id, language):
         "amasaha yo", "saa zingahe", "ni ryari", "ryari", "mu saa",
         "bafungura", "bafunga", "bihe", "bitangira", "birangira"
     ]):
-        return lang_facts.get("hours")
+        v = lang_facts.get("hours")
+        return ("hours", v) if v else (None, None)
 
-    # ── Location triggers ────────────────────────────────────────────────────
     if any(k in q_low for k in [
         "where is", "where is it", "location", "address", "adresse", "situated", "situe",
         "how far", "distance", "aho iherereye", "mu karere",
@@ -580,9 +631,9 @@ def get_core_fact(query, museum_id, language):
         "km uvuye", "birometero", "kilometero", "how do i get to",
         "si trouve", "se trouve"
     ]):
-        return lang_facts.get("location")
+        v = lang_facts.get("location")
+        return ("location", v) if v else (None, None)
 
-    # ── History / overview triggers ──────────────────────────────────────────
     if any(k in q_low for k in [
         "history", "histoire", "amateka", "tell me about", "what is this",
         "overview", "about the museum", "describe", "who built", "when was",
@@ -593,9 +644,23 @@ def get_core_fact(query, museum_id, language):
         "ingoro", "ingabo", "igenda bite", "ikora iki",
         "sobanurira", "mbwire", "ibyo uzi", "ukubwira"
     ]):
-        return lang_facts.get("history")
+        v = lang_facts.get("history")
+        return ("history", v) if v else (None, None)
 
-    return None
+    return (None, None)
+
+
+def get_core_fact(query, museum_id, language):
+    _, text = resolve_core_fact(query, museum_id, language)
+    return text
+
+
+def get_core_fact_route_key(query, museum_id, language):
+    """Public hook for evaluation scripts: which curated branch matched, or 'unrouted'."""
+    key, text = resolve_core_fact(query, museum_id, language)
+    if key:
+        return key
+    return "unrouted"
 
 
 def smart_fallback(query, context, language, museum_name):
@@ -849,12 +914,20 @@ OUT_OF_SCOPE_PATTERNS = [
     r'\b(translate|traduction)\b',
 ]
 
-def is_out_of_scope(query, best_distance):
+def is_out_of_scope(query, best_distance, museum_id=None):
     """Return True if the query is clearly not about the museum."""
     q = query.lower()
     for pat in OUT_OF_SCOPE_PATTERNS:
         if re.search(pat, q):
             return True
+    # Museum Ingabo: named exhibitions (KAMWE, Inzira, etc.) must not be blocked by weak embedding distance
+    if museum_id == "3" and re.search(
+        r'\b(kamwe|inzira|inzitane|rebero|cultural village|king ngabo|museum ingabo|musée ingabo|'
+        r'ingabo|same wounds|different\s*,?\s*same|path of resilience|hundred days|100\s*days|'
+        r'iminsi\s*100|cent jours|exhibit|exhibition|installation)\b',
+        q, re.I
+    ):
+        return False
     # If ChromaDB found nothing even close, treat as out-of-scope
     if best_distance is not None and best_distance > RELEVANCE_THRESHOLD:
         return True
@@ -891,10 +964,14 @@ def chat():
     try:
         coll = get_db()
         total = coll.count()
-        safe_n = max(1, min(4, total)) if total > 0 else 0
+        safe_n = max(1, min(8, total)) if total > 0 else 0
+        # Richer query text helps embeddings match short visitor questions (e.g. "kamwe")
+        qtext = msg
+        if mid == "3" and re.search(r'kamwe|kamo|hundred|100|cent jour|iminsi|exhibit|exhibition|death|genocide|memory', msg, re.I):
+            qtext = f"{msg} KAMWE exhibition Museum Ingabo Rebero art installation memory genocide remembrance"
         if safe_n > 0:
             results = coll.query(
-                query_texts=[msg], n_results=safe_n,
+                query_texts=[qtext], n_results=safe_n,
                 where={"museum_id": mid},
                 include=["documents", "distances"]
             )
@@ -905,7 +982,7 @@ def chat():
             # If the museum-specific filter returned nothing, broaden to all museums
             if not context:
                 results = coll.query(
-                    query_texts=[msg], n_results=safe_n,
+                    query_texts=[qtext], n_results=safe_n,
                     include=["documents", "distances"]
                 )
                 context = results['documents'][0] if results['documents'] else []
@@ -917,7 +994,7 @@ def chat():
         context = []
 
     # ── Out-of-scope guard ───────────────────────────────────────────────────
-    if is_out_of_scope(msg, best_distance):
+    if is_out_of_scope(msg, best_distance, mid):
         oos = {
             'en': (f"I'm your Digital Curator at {m_name} and I can only assist with museum-related "
                    f"topics such as our history, exhibits, opening hours, admission, and directions. "

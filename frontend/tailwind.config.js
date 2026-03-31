@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+    darkMode: 'class',
     content: [
         "./index.html",
         "./src/**/*.{js,ts,jsx,tsx}",
@@ -16,6 +17,14 @@ export default {
                     'gold': '#C5A059',           // Highlight accents
                     'text-main': '#2C1E12',      // Primary text
                     'text-muted': '#6B5D51',     // Secondary text
+                    'night': {
+                        'bg': '#0f0e0d',
+                        'surface': '#1a1816',
+                        'elevated': '#252220',
+                        'border': '#3a342f',
+                        'text': '#ebe7e2',
+                        'muted': '#9c9188',
+                    },
                 }
             },
             fontFamily: {

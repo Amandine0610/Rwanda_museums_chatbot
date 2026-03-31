@@ -1,89 +1,71 @@
 import React from 'react';
 import MUSEUMS from '../data/museums';
+import ThemeToggle from './ThemeToggle';
 
-// Simple inline QR code using the free qrcode.react library
-// If that's not installed, we'll use a URL-based API instead (no install needed)
 const QR_API = (url) =>
     `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
 
 const QRAdmin = () => {
-    // Use window.location.origin to build the correct base URL
     const base = window.location.origin;
 
     return (
-        <div style={{ fontFamily: 'system-ui, sans-serif', background: '#F5F0EA', minHeight: '100vh', padding: '2rem' }}>
-            <div style={{ maxWidth: 900, margin: '0 auto' }}>
-                <h1 style={{ color: '#5C3D1E', fontSize: '1.8rem', fontWeight: 800, marginBottom: 8 }}>
-                    🏛️ Rwanda Museums — QR Code Management
-                </h1>
-                <p style={{ color: '#8B6914', marginBottom: '2rem', fontSize: '0.95rem' }}>
-                    Print one QR code per museum and place it at the entrance. Each QR opens the chatbot in that museum's specific context.
-                </p>
+        <div className="min-h-screen bg-museum-cream-light dark:bg-museum-night-bg text-museum-text-main dark:text-museum-night-text p-6 md:p-10 transition-colors">
+            <div className="max-w-5xl mx-auto">
+                <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-extrabold text-museum-brown-dark dark:text-museum-night-text mb-2">
+                            Rwanda Museums — QR codes
+                        </h1>
+                        <p className="text-museum-brown-medium dark:text-museum-night-muted text-sm md:text-base max-w-2xl">
+                            One QR per museum; each opens the guide in that museum&apos;s context.
+                        </p>
+                    </div>
+                    <ThemeToggle />
+                </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.5rem' }}>
-                    {MUSEUMS.map(museum => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {MUSEUMS.map((museum) => {
                         const url = `${base}/?museumId=${museum.id}`;
                         return (
-                            <div key={museum.id} style={{
-                                background: 'white',
-                                borderRadius: 16,
-                                padding: '1.5rem',
-                                boxShadow: '0 4px 16px rgba(92,61,30,0.1)',
-                                border: '1px solid #E8DDD0',
-                                textAlign: 'center'
-                            }}>
+                            <div
+                                key={museum.id}
+                                className="bg-white dark:bg-museum-night-elevated rounded-2xl p-6 shadow-md border border-museum-cream-dark dark:border-museum-night-border text-center"
+                            >
                                 <img
                                     src={QR_API(url)}
                                     alt={`QR for ${museum.name.en}`}
-                                    style={{ width: 180, height: 180, borderRadius: 8, marginBottom: 12 }}
+                                    className="w-[180px] h-[180px] mx-auto rounded-lg mb-3"
                                 />
-                                <h3 style={{ color: '#5C3D1E', fontSize: '1rem', fontWeight: 700, marginBottom: 4 }}>
+                                <h3 className="text-museum-brown-dark dark:text-museum-gold text-sm font-bold mb-1">
                                     Museum ID: {museum.id}
                                 </h3>
-                                <p style={{ color: '#5C3D1E', fontWeight: 800, fontSize: '1.05rem', marginBottom: 4 }}>
+                                <p className="text-museum-brown-dark dark:text-museum-night-text font-bold text-base mb-1">
                                     {museum.name.en}
                                 </p>
-                                <p style={{ color: '#8B6914', fontSize: '0.8rem', marginBottom: 12 }}>
-                                    📍 {museum.location}
+                                <p className="text-museum-brown-medium dark:text-museum-night-muted text-xs mb-3">
+                                    {museum.location}
                                 </p>
-                                <code style={{
-                                    display: 'block',
-                                    background: '#F5F0EA',
-                                    padding: '0.5rem',
-                                    borderRadius: 8,
-                                    fontSize: '0.7rem',
-                                    color: '#5C3D1E',
-                                    wordBreak: 'break-all',
-                                    marginBottom: 12
-                                }}>
+                                <code className="block bg-museum-cream-light dark:bg-museum-night-bg text-left text-[0.65rem] p-2 rounded-lg text-museum-brown-dark dark:text-museum-night-muted break-all mb-3">
                                     {url}
                                 </code>
                                 <button
+                                    type="button"
                                     onClick={() => window.open(url, '_blank')}
-                                    style={{
-                                        background: '#8B6914',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: 8,
-                                        padding: '0.5rem 1rem',
-                                        cursor: 'pointer',
-                                        fontSize: '0.85rem',
-                                        fontWeight: 600
-                                    }}
+                                    className="museum-button-primary px-4 py-2 text-sm w-full"
                                 >
-                                    Test this URL ↗
+                                    Open URL
                                 </button>
                             </div>
                         );
                     })}
                 </div>
 
-                <div style={{ marginTop: '2rem', padding: '1rem', background: '#fff3cd', borderRadius: 12, border: '1px solid #ffc107' }}>
-                    <strong>📋 How to use:</strong>
-                    <ol style={{ marginTop: 8, paddingLeft: 20, color: '#5C3D1E', fontSize: '0.9rem' }}>
-                        <li>Right-click each QR code image → "Save Image As" to download it</li>
-                        <li>Print and place at the museum entrance</li>
-                        <li>Visitors scan → language selector opens → they pick their language → museum portal opens</li>
+                <div className="mt-10 p-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 text-sm text-museum-brown-dark dark:text-museum-night-text">
+                    <strong className="block mb-2">How to use</strong>
+                    <ol className="list-decimal pl-5 space-y-1 text-museum-brown-medium dark:text-museum-night-muted">
+                        <li>Save each QR image (right-click → Save image).</li>
+                        <li>Print and place at the museum entrance.</li>
+                        <li>Visitors scan → language choice → chat opens for that museum.</li>
                     </ol>
                 </div>
             </div>

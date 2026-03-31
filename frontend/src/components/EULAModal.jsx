@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ThemeToggle from './ThemeToggle';
 
 const EULA_STORAGE_KEY = 'rwandaMuseumEulaAccepted';
 
@@ -125,8 +126,6 @@ const CLAUSE_ICONS = [
     <svg key="5" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
 ];
 
-// ─── Component ───────────────────────────────────────────────────────────────
-
 function EULAModal({ onAccept, onDecline, initialLang = 'en' }) {
     const [lang, setLang] = useState(['en', 'fr', 'rw'].includes(initialLang) ? initialLang : 'en');
     const [declined, setDeclined] = useState(false);
@@ -146,14 +145,14 @@ function EULAModal({ onAccept, onDecline, initialLang = 'en' }) {
     if (declined) {
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-                <div className="bg-museum-cream-light rounded-2xl shadow-card max-w-sm w-full p-8 text-center border border-museum-brown-light/30">
-                    <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                <div className="bg-museum-cream-light dark:bg-museum-night-elevated rounded-2xl shadow-card max-w-sm w-full p-8 text-center border border-museum-brown-light/30 dark:border-museum-night-border">
+                    <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-950/50 flex items-center justify-center mx-auto mb-4">
                         <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5.07 19H19a2 2 0 001.75-2.96L13.75 4a2 2 0 00-3.5 0L3.25 16.04A2 2 0 005.07 19z" />
                         </svg>
                     </div>
-                    <h2 className="text-xl font-semibold text-museum-text-main mb-2">{t.deniedTitle}</h2>
-                    <p className="text-museum-text-muted text-sm leading-relaxed">{t.deniedMsg}</p>
+                    <h2 className="text-xl font-semibold text-museum-text-main dark:text-museum-night-text mb-2">{t.deniedTitle}</h2>
+                    <p className="text-museum-text-muted dark:text-museum-night-muted text-sm leading-relaxed">{t.deniedMsg}</p>
                 </div>
             </div>
         );
@@ -162,17 +161,15 @@ function EULAModal({ onAccept, onDecline, initialLang = 'en' }) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
             <div
-                className="bg-museum-cream-light rounded-2xl shadow-card w-full max-w-lg border border-museum-brown-light/30 flex flex-col"
+                className="bg-museum-cream-light dark:bg-museum-night-surface rounded-2xl shadow-card w-full max-w-lg border border-museum-brown-light/30 dark:border-museum-night-border flex flex-col"
                 style={{ maxHeight: '90vh' }}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="eula-title"
             >
-                {/* Header */}
-                <div className="bg-museum-brown-dark rounded-t-2xl px-6 py-4 flex-shrink-0">
-                    <div className="flex items-center justify-between mb-2">
-                        {/* Title + icon */}
-                        <div className="flex items-center gap-3">
+                <div className="bg-museum-brown-dark dark:bg-[#2d241c] rounded-t-2xl px-6 py-4 flex-shrink-0">
+                    <div className="flex items-center justify-between mb-2 gap-2">
+                        <div className="flex items-center gap-3 min-w-0">
                             <div className="w-8 h-8 rounded-full bg-museum-gold/20 flex items-center justify-center flex-shrink-0">
                                 <svg className="w-4 h-4 text-museum-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -186,25 +183,26 @@ function EULAModal({ onAccept, onDecline, initialLang = 'en' }) {
                             </div>
                         </div>
 
-                        {/* Language switcher */}
-                        <div className="flex gap-1">
-                            {['en', 'fr', 'rw'].map((l) => (
-                                <button
-                                    key={l}
-                                    onClick={() => setLang(l)}
-                                    className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
-                                        lang === l
-                                            ? 'bg-museum-gold text-museum-brown-dark'
-                                            : 'bg-white/10 text-white/70 hover:bg-white/20'
-                                    }`}
-                                >
-                                    {LANG_LABELS[l]}
-                                </button>
-                            ))}
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <ThemeToggle className="!border-white/25 !bg-white/10 !text-white hover:!bg-white/20 scale-90" />
+                            <div className="flex gap-1">
+                                {['en', 'fr', 'rw'].map((l) => (
+                                    <button
+                                        key={l}
+                                        onClick={() => setLang(l)}
+                                        className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                                            lang === l
+                                                ? 'bg-museum-gold text-museum-brown-dark'
+                                                : 'bg-white/10 text-white/70 hover:bg-white/20'
+                                        }`}
+                                    >
+                                        {LANG_LABELS[l]}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
-                    {/* Rwanda flag stripe */}
                     <div className="flex rounded-sm overflow-hidden h-1 mt-2">
                         <div className="flex-1 bg-[#20603D]" />
                         <div className="flex-1 bg-[#FAD201]" />
@@ -212,20 +210,19 @@ function EULAModal({ onAccept, onDecline, initialLang = 'en' }) {
                     </div>
                 </div>
 
-                {/* Scrollable body */}
                 <div className="overflow-y-auto flex-1 px-6 py-4 no-scrollbar">
-                    <p className="text-museum-text-muted text-xs mb-4 leading-relaxed">{t.intro}</p>
+                    <p className="text-museum-text-muted dark:text-museum-night-muted text-xs mb-4 leading-relaxed">{t.intro}</p>
 
                     <div className="space-y-3">
                         {t.clauses.map((clause, i) => (
-                            <div key={i} className="rounded-xl border border-museum-cream-dark bg-white/60 p-4">
+                            <div key={i} className="rounded-xl border border-museum-cream-dark dark:border-museum-night-border bg-white/60 dark:bg-museum-night-elevated/80 p-4">
                                 <div className="flex items-start gap-3">
-                                    <div className="w-7 h-7 rounded-lg bg-museum-brown-dark/10 flex items-center justify-center flex-shrink-0 mt-0.5 text-museum-brown-dark">
+                                    <div className="w-7 h-7 rounded-lg bg-museum-brown-dark/10 dark:bg-museum-night-bg flex items-center justify-center flex-shrink-0 mt-0.5 text-museum-brown-dark dark:text-museum-gold">
                                         {CLAUSE_ICONS[i]}
                                     </div>
                                     <div>
-                                        <h3 className="text-museum-text-main font-semibold text-sm mb-1">{clause.title}</h3>
-                                        <p className="text-museum-text-muted text-xs leading-relaxed">{clause.body}</p>
+                                        <h3 className="text-museum-text-main dark:text-museum-night-text font-semibold text-sm mb-1">{clause.title}</h3>
+                                        <p className="text-museum-text-muted dark:text-museum-night-muted text-xs leading-relaxed">{clause.body}</p>
                                     </div>
                                 </div>
                             </div>
@@ -233,19 +230,18 @@ function EULAModal({ onAccept, onDecline, initialLang = 'en' }) {
                     </div>
                 </div>
 
-                {/* Footer */}
-                <div className="flex-shrink-0 px-6 py-4 border-t border-museum-cream-dark bg-museum-cream-light rounded-b-2xl">
-                    <p className="text-museum-text-muted text-xs text-center mb-3">{t.footerNote}</p>
+                <div className="flex-shrink-0 px-6 py-4 border-t border-museum-cream-dark dark:border-museum-night-border bg-museum-cream-light dark:bg-museum-night-surface rounded-b-2xl">
+                    <p className="text-museum-text-muted dark:text-museum-night-muted text-xs text-center mb-3">{t.footerNote}</p>
                     <div className="flex gap-3">
                         <button
                             onClick={handleDecline}
-                            className="flex-1 py-3 px-4 rounded-xl border-2 border-museum-brown-light text-museum-text-main font-medium text-sm transition-all hover:bg-museum-cream-dark active:scale-95"
+                            className="flex-1 py-3 px-4 rounded-xl border-2 border-museum-brown-light dark:border-museum-night-border text-museum-text-main dark:text-museum-night-text font-medium text-sm transition-all hover:bg-museum-cream-dark dark:hover:bg-museum-night-elevated active:scale-95"
                         >
                             {t.declineBtn}
                         </button>
                         <button
                             onClick={handleAccept}
-                            className="flex-1 py-3 px-4 rounded-xl bg-museum-brown-dark text-white font-semibold text-sm transition-all hover:bg-museum-brown-medium active:scale-95 shadow-md"
+                            className="flex-1 py-3 px-4 rounded-xl bg-museum-brown-dark dark:bg-museum-gold dark:text-museum-brown-dark text-white font-semibold text-sm transition-all hover:bg-museum-brown-medium dark:hover:bg-museum-gold/90 active:scale-95 shadow-md"
                         >
                             {t.agreeBtn}
                         </button>

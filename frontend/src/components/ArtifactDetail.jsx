@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import translations from '../translations';
 import MUSEUMS from '../data/museums';
+import ThemeToggle from './ThemeToggle';
 
 const LANG_META = {
     en: { label: 'English',     flag: '🇬🇧', next: 'fr' },
@@ -32,7 +33,6 @@ const ArtifactDetail = ({ language, setLanguage, onBack, initialMuseumId }) => {
         setLanguage(LANG_META[language]?.next || 'en');
     };
 
-    /* ── Fetch welcome message ── */
     useEffect(() => {
         let active = true;
         setMessages([]);
@@ -46,7 +46,7 @@ const ArtifactDetail = ({ language, setLanguage, onBack, initialMuseumId }) => {
                     query: 'special:welcome',
                     language,
                     museumId: initialMuseumId,
-                });
+                }, { timeout: 90000 });
                 if (active) {
                     setMessages([{
                         role: 'bot',
@@ -89,7 +89,7 @@ const ArtifactDetail = ({ language, setLanguage, onBack, initialMuseumId }) => {
                 query: userText,
                 language,
                 museumId: initialMuseumId,
-            });
+            }, { timeout: 90000 });
             let reply = res.data.response
                 .replace(/\*\*/g, '')
                 .replace(/__/g, '');
@@ -115,10 +115,10 @@ const ArtifactDetail = ({ language, setLanguage, onBack, initialMuseumId }) => {
     return (
         <div className="phone-frame">
             <div className="phone-notch"></div>
-            <div className="phone-screen flex flex-col bg-[#F5F0EA]">
+            <div className="phone-screen flex flex-col bg-[#F5F0EA] dark:bg-museum-night-bg">
 
                 {/* ── TOP HEADER ── */}
-                <header className="bg-museum-brown-dark px-4 py-3 flex items-center justify-between text-white z-20 shadow-lg flex-shrink-0">
+                <header className="bg-museum-brown-dark dark:bg-[#2d241c] px-4 py-3 flex items-center justify-between text-white z-20 shadow-lg flex-shrink-0 border-b border-black/10 dark:border-white/5">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={onBack}
@@ -138,16 +138,18 @@ const ArtifactDetail = ({ language, setLanguage, onBack, initialMuseumId }) => {
                             </h1>
                         </div>
                     </div>
-                    <button
-                        onClick={cycleLanguage}
-                        className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-full transition-all text-[11px] font-bold"
-                    >
-                        <span>{LANG_META[language]?.flag}</span>
-                        <span>{LANG_META[language]?.label}</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <ThemeToggle className="!border-white/25 !bg-white/10 !text-white hover:!bg-white/20" />
+                        <button
+                            onClick={cycleLanguage}
+                            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-full transition-all text-[11px] font-bold"
+                        >
+                            <span>{LANG_META[language]?.flag}</span>
+                            <span>{LANG_META[language]?.label}</span>
+                        </button>
+                    </div>
                 </header>
 
-                {/* ── MUSEUM HERO IMAGE ── */}
                 <div className="relative h-36 overflow-hidden flex-shrink-0">
                     <img
                         src={currentMuseum.image}
@@ -173,7 +175,6 @@ const ArtifactDetail = ({ language, setLanguage, onBack, initialMuseumId }) => {
                     </div>
                 </div>
 
-                {/* ── MESSAGES ── */}
                 <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3 no-scrollbar pb-32">
 
                     {messages.map((msg, i) => (
@@ -186,15 +187,17 @@ const ArtifactDetail = ({ language, setLanguage, onBack, initialMuseumId }) => {
                             <div className={`max-w-[78%] ${msg.role === 'user' ? 'max-w-[72%]' : ''}`}>
                                 <div className={`px-4 py-3 rounded-2xl text-[13.5px] leading-[1.65] shadow-sm ${
                                     msg.role === 'user'
-                                        ? 'bg-museum-brown-medium text-white rounded-tr-sm'
+                                        ? 'bg-museum-brown-medium text-white rounded-tr-sm dark:bg-museum-brown-medium/90'
                                         : msg.isError
-                                            ? 'bg-red-50 text-red-700 border border-red-100 rounded-tl-sm'
-                                            : 'bg-white text-museum-brown-dark border border-museum-cream-dark rounded-tl-sm'
+                                            ? 'bg-red-50 text-red-700 border border-red-100 rounded-tl-sm dark:bg-red-950/40 dark:text-red-200 dark:border-red-900/50'
+                                            : 'bg-white text-museum-brown-dark border border-museum-cream-dark rounded-tl-sm dark:bg-museum-night-elevated dark:text-museum-night-text dark:border-museum-night-border'
                                 }`}>
                                     <p className="whitespace-pre-wrap">{msg.text}</p>
                                 </div>
                                 <p className={`text-[9px] mt-1 font-medium opacity-40 uppercase tracking-wider ${
-                                    msg.role === 'user' ? 'text-right text-museum-brown-medium' : 'text-museum-brown-medium'
+                                    msg.role === 'user'
+                                        ? 'text-right text-museum-brown-medium dark:text-museum-night-muted'
+                                        : 'text-museum-brown-medium dark:text-museum-night-muted'
                                 }`}>
                                     {fmt(msg.time)}
                                 </p>
@@ -208,7 +211,7 @@ const ArtifactDetail = ({ language, setLanguage, onBack, initialMuseumId }) => {
                             <div className="w-7 h-7 rounded-full bg-museum-brown-dark flex items-center justify-center text-xs mr-2 flex-shrink-0">
                                 🏛️
                             </div>
-                            <div className="bg-white border border-museum-cream-dark px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm">
+                            <div className="bg-white border border-museum-cream-dark px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm dark:bg-museum-night-elevated dark:border-museum-night-border">
                                 <div className="flex gap-1 items-center h-4">
                                     <span className="w-1.5 h-1.5 bg-museum-brown-medium/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                                     <span className="w-1.5 h-1.5 bg-museum-brown-medium/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -221,17 +224,15 @@ const ArtifactDetail = ({ language, setLanguage, onBack, initialMuseumId }) => {
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* ── BOTTOM INPUT AREA ── */}
-                <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-museum-cream-dark px-4 pt-3 pb-5 flex-shrink-0" style={{ maxWidth: 'inherit' }}>
+                <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-museum-cream-dark px-4 pt-3 pb-5 flex-shrink-0 dark:bg-museum-night-surface/95 dark:border-museum-night-border dark:backdrop-blur-lg" style={{ maxWidth: 'inherit' }}>
 
-                    {/* Quick suggestion chips */}
                     {showSuggestions && messages.length > 0 && !loading && (
                         <div className="flex gap-2 overflow-x-auto no-scrollbar mb-3 pb-0.5">
                             {SUGGESTIONS[language]?.map((s, i) => (
                                 <button
                                     key={i}
                                     onClick={() => sendMessage(s)}
-                                    className="flex-shrink-0 text-[11px] font-medium px-3 py-1.5 bg-museum-cream-light border border-museum-brown-light/30 text-museum-brown-dark rounded-full hover:bg-museum-brown-light/20 hover:border-museum-brown-medium/40 transition-all whitespace-nowrap"
+                                    className="flex-shrink-0 text-[11px] font-medium px-3 py-1.5 bg-museum-cream-light border border-museum-brown-light/30 text-museum-brown-dark rounded-full hover:bg-museum-brown-light/20 hover:border-museum-brown-medium/40 transition-all whitespace-nowrap dark:bg-museum-night-elevated dark:border-museum-night-border dark:text-museum-night-text dark:hover:bg-museum-night-border/80"
                                 >
                                     {s}
                                 </button>
@@ -247,7 +248,7 @@ const ArtifactDetail = ({ language, setLanguage, onBack, initialMuseumId }) => {
                                 onChange={e => setInput(e.target.value)}
                                 placeholder={t.chatPlaceholder}
                                 disabled={loading}
-                                className="w-full bg-[#F5F0EA] border-2 border-transparent focus:border-museum-brown-medium/30 focus:bg-white rounded-2xl py-3 px-4 text-[13px] text-museum-brown-dark placeholder:text-museum-brown-light/50 outline-none transition-all duration-200 font-medium disabled:opacity-60"
+                                className="w-full bg-[#F5F0EA] border-2 border-transparent focus:border-museum-brown-medium/30 focus:bg-white rounded-2xl py-3 px-4 text-[13px] text-museum-brown-dark placeholder:text-museum-brown-light/50 outline-none transition-all duration-200 font-medium disabled:opacity-60 dark:bg-museum-night-bg dark:text-museum-night-text dark:placeholder:text-museum-night-muted focus:dark:bg-museum-night-elevated focus:dark:border-museum-brown-light/40"
                             />
                         </div>
                         <button
@@ -255,8 +256,8 @@ const ArtifactDetail = ({ language, setLanguage, onBack, initialMuseumId }) => {
                             disabled={loading || !input.trim()}
                             className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
                                 loading || !input.trim()
-                                    ? 'bg-museum-cream-dark text-museum-brown-light/30 cursor-not-allowed'
-                                    : 'bg-museum-brown-dark text-white hover:bg-museum-brown-medium active:scale-95 shadow-md'
+                                    ? 'bg-museum-cream-dark text-museum-brown-light/30 cursor-not-allowed dark:bg-museum-night-border dark:text-museum-night-muted'
+                                    : 'bg-museum-brown-dark text-white hover:bg-museum-brown-medium active:scale-95 shadow-md dark:bg-museum-gold dark:text-museum-brown-dark dark:hover:bg-museum-gold/90'
                             }`}
                         >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

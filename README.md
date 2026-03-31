@@ -55,7 +55,7 @@ Python/Flask Backend (Railway) <-- app.py
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 18, Vite, TailwindCSS, Axios, Framer Motion |
+| Frontend | React 18, Vite, TailwindCSS (light/dark), Axios, Framer Motion |
 | Backend | Python 3.11, Flask, Flask-CORS, Gunicorn |
 | Vector Store | ChromaDB (ONNX-based DefaultEmbeddingFunction) |
 | LLM | Google Gemini REST API (gemini-2.0-flash-lite) |

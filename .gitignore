@@ -23,6 +23,9 @@ live_query_results.txt
 flask_*.log
 *.log
 
+# Misc
+*.pdf
+
 # OS
 .DS_Store
 Thumbs.db
